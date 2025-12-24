@@ -1,7 +1,9 @@
+
 #!/usr/bin/env python3
 """
 Auto Rename Bot - Complete Version
 Users set media format first, then all files are processed accordingly
+FIXED: Preserves audio and subtitle tracks during conversion
 """
 
 import os
@@ -55,94 +57,94 @@ class Config:
     SUPPORTED_DOCUMENT_FORMATS = ['.txt', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx']
 
 class Txt:
-    START_TXT = """<b>ʜᴇʏ! {}  
+    START_TXT = """<b>Êœá´‡Ê! {}  
 
-» ɪ ᴀᴍ ᴀᴅᴠᴀɴᴄᴇᴅ ʀᴇɴᴀᴍᴇ ʙᴏᴛ! ᴡʜɪᴄʜ ᴄᴀɴ ᴀᴜᴛᴏʀᴇɴᴀᴍᴇ ʏᴏᴜʀ ғɪʟᴇs ᴡɪᴛʜ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀɴᴅ ᴛʜᴜᴍʙɴᴀɪʟ ᴀɴᴅ ᴀʟsᴏ sᴇǫᴜᴇɴᴄᴇ ᴛʜᴇᴍ ᴘᴇʀғᴇᴄᴛʟʏ</b>"""
+Â» Éª á´€á´ á´€á´…á´ á´€É´á´„á´‡á´… Ê€á´‡É´á´€á´á´‡ Ê™á´á´›! á´¡ÊœÉªá´„Êœ á´„á´€É´ á´€á´œá´›á´Ê€á´‡É´á´€á´á´‡ Êá´á´œÊ€ Ò“ÉªÊŸá´‡s á´¡Éªá´›Êœ á´„á´œsá´›á´á´ á´„á´€á´˜á´›Éªá´É´ á´€É´á´… á´›Êœá´œá´Ê™É´á´€ÉªÊŸ á´€É´á´… á´€ÊŸsá´ sá´‡Ç«á´œá´‡É´á´„á´‡ á´›Êœá´‡á´ á´˜á´‡Ê€Ò“á´‡á´„á´›ÊŸÊ</b>"""
     
-    FILE_NAME_TXT = """<b>» <u>sᴇᴛᴜᴘ ᴀᴜᴛᴏ ʀᴇɴᴀᴍᴇ ғᴏʀᴍᴀᴛ</u></b>
+    FILE_NAME_TXT = """<b>Â» <u>sá´‡á´›á´œá´˜ á´€á´œá´›á´ Ê€á´‡É´á´€á´á´‡ Ò“á´Ê€á´á´€á´›</u></b>
 
-<b>ᴠᴀʀɪᴀʙʟᴇs :</b>
-➲ ᴇᴘɪsᴏᴅᴇ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ ᴇᴘɪsᴏᴅᴇ ɴᴜᴍʙᴇʀ  
-➲ sᴇᴀsᴏɴ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ sᴇᴀsᴏɴ ɴᴜᴍʙᴇʀ  
-➲ ǫᴜᴀʟɪᴛʏ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ ǫᴜᴀʟɪᴛʏ  
+<b>á´ á´€Ê€Éªá´€Ê™ÊŸá´‡s :</b>
+âž² á´‡á´˜Éªsá´á´…á´‡ - á´›á´ Ê€á´‡á´˜ÊŸá´€á´„á´‡ á´‡á´˜Éªsá´á´…á´‡ É´á´œá´Ê™á´‡Ê€  
+âž² sá´‡á´€sá´É´ - á´›á´ Ê€á´‡á´˜ÊŸá´€á´„á´‡ sá´‡á´€sá´É´ É´á´œá´Ê™á´‡Ê€  
+âž² Ç«á´œá´€ÊŸÉªá´›Ê - á´›á´ Ê€á´‡á´˜ÊŸá´€á´„á´‡ Ç«á´œá´€ÊŸÉªá´›Ê  
 
-<b>‣ ꜰᴏʀ ᴇx:- </b> `/autorename Oᴠᴇʀғʟᴏᴡ [Sseason Eepisode] - [Dual] quality`
+<b>â€£ êœ°á´Ê€ á´‡x:- </b> `/autorename Oá´ á´‡Ê€Ò“ÊŸá´á´¡ [Sseason Eepisode] - [Dual] quality`
 
-<b>‣ /Autorename: ʀᴇɴᴀᴍᴇ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰɪʟᴇs ʙʏ ɪɴᴄʟᴜᴅɪɴɢ 'ᴇᴘɪsᴏᴅᴇ' ᴀɴᴅ 'ǫᴜᴀʟɪᴛʏ' ᴠᴀʀɪᴀʙʟᴇs ɪɴ ʏᴏᴜʀ ᴛᴇxᴛ, ᴛᴏ ᴇxᴛʀᴀᴄᴛ ᴇᴘɪsᴏᴅᴇ ᴀɴᴅ ǫᴜᴀʟɪᴛʏ ᴘʀᴇsᴇɴᴛ ɪɴ ᴛʜᴇ ᴏʀɪɢɪɴᴀʟ ꜰɪʟᴇɴᴀᴍᴇ.</b>"""
+<b>â€£ /Autorename: Ê€á´‡É´á´€á´á´‡ Êá´á´œÊ€ á´á´‡á´…Éªá´€ êœ°ÉªÊŸá´‡s Ê™Ê ÉªÉ´á´„ÊŸá´œá´…ÉªÉ´É¢ 'á´‡á´˜Éªsá´á´…á´‡' á´€É´á´… 'Ç«á´œá´€ÊŸÉªá´›Ê' á´ á´€Ê€Éªá´€Ê™ÊŸá´‡s ÉªÉ´ Êá´á´œÊ€ á´›á´‡xá´›, á´›á´ á´‡xá´›Ê€á´€á´„á´› á´‡á´˜Éªsá´á´…á´‡ á´€É´á´… Ç«á´œá´€ÊŸÉªá´›Ê á´˜Ê€á´‡sá´‡É´á´› ÉªÉ´ á´›Êœá´‡ á´Ê€ÉªÉ¢ÉªÉ´á´€ÊŸ êœ°ÉªÊŸá´‡É´á´€á´á´‡.</b>"""
     
-    CAPTION_TXT = """<b><u>» ᴛᴏ ꜱᴇᴛ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀɴᴅ ᴍᴇᴅɪᴀ ᴛʏᴘᴇ</u></b>
+    CAPTION_TXT = """<b><u>Â» á´›á´ êœ±á´‡á´› á´„á´œsá´›á´á´ á´„á´€á´˜á´›Éªá´É´ á´€É´á´… á´á´‡á´…Éªá´€ á´›Êá´˜á´‡</u></b>
     
-<b>ᴠᴀʀɪᴀʙʟᴇs :</b>         
-sɪᴢᴇ: {filesize}
-ᴅᴜʀᴀᴛɪᴏɴ: {duration}
-ꜰɪʟᴇɴᴀᴍᴇ: {filename}
+<b>á´ á´€Ê€Éªá´€Ê™ÊŸá´‡s :</b>         
+sÉªá´¢á´‡: {filesize}
+á´…á´œÊ€á´€á´›Éªá´É´: {duration}
+êœ°ÉªÊŸá´‡É´á´€á´á´‡: {filename}
 
-➲ /set_caption: ᴛᴏ ꜱᴇᴛ ᴀ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
-➲ /see_caption: ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
-➲ /del_caption: ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
+âž² /set_caption: á´›á´ êœ±á´‡á´› á´€ á´„á´œsá´›á´á´ á´„á´€á´˜á´›Éªá´É´.
+âž² /see_caption: á´›á´ á´ Éªá´‡á´¡ Êá´á´œÊ€ á´„á´œsá´›á´á´ á´„á´€á´˜á´›Éªá´É´.
+âž² /del_caption: á´›á´ á´…á´‡ÊŸá´‡á´›á´‡ Êá´á´œÊ€ á´„á´œsá´›á´á´ á´„á´€á´˜á´›Éªá´É´.
 
-» ꜰᴏʀ ᴇx:- /set_caption ꜰɪʟᴇ ɴᴀᴍᴇ: {filename}"""
+Â» êœ°á´Ê€ á´‡x:- /set_caption êœ°ÉªÊŸá´‡ É´á´€á´á´‡: {filename}"""
 
-    THUMBNAIL_TXT = """<b><u>» ᴛᴏ ꜱᴇᴛ ᴄᴜsᴛᴏᴍ ᴛʜᴜᴍʙɴᴀɪʟ</u></b>
+    THUMBNAIL_TXT = """<b><u>Â» á´›á´ êœ±á´‡á´› á´„á´œsá´›á´á´ á´›Êœá´œá´Ê™É´á´€ÉªÊŸ</u></b>
     
-➲ /start: ꜱᴇɴᴅ ᴀɴʏ ᴘʜᴏᴛᴏ ᴛᴏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ꜱᴇᴛ ɪᴛ ᴀs ᴀ ᴛʜᴜᴍʙɴᴀɪʟ..
-➲ /del_thumb: ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴏʟᴅ ᴛʜᴜᴍʙɴᴀɪʟ.
-➲ /view_thumb: ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜʀʀᴇɴᴛ ᴛʜᴜᴍʙɴᴀɪʟ.
+âž² /start: êœ±á´‡É´á´… á´€É´Ê á´˜Êœá´á´›á´ á´›á´ á´€á´œá´›á´á´á´€á´›Éªá´„á´€ÊŸÊŸÊ êœ±á´‡á´› Éªá´› á´€s á´€ á´›Êœá´œá´Ê™É´á´€ÉªÊŸ..
+âž² /del_thumb: á´œsá´‡ á´›ÊœÉªs á´„á´á´á´á´€É´á´… á´›á´ á´…á´‡ÊŸá´‡á´›á´‡ Êá´á´œÊ€ á´ÊŸá´… á´›Êœá´œá´Ê™É´á´€ÉªÊŸ.
+âž² /view_thumb: á´œsá´‡ á´›ÊœÉªs á´„á´á´á´á´€É´á´… á´›á´ á´ Éªá´‡á´¡ Êá´á´œÊ€ á´„á´œÊ€Ê€á´‡É´á´› á´›Êœá´œá´Ê™É´á´€ÉªÊŸ.
 
-ɴᴏᴛᴇ: ɪꜰ ɴᴏ ᴛʜᴜᴍʙɴᴀɪʟ ꜱᴀᴠᴇᴅ ɪɴ ʙᴏᴛ ᴛʜᴇɴ, ɪᴛ ᴡɪʟʟ ᴜsᴇ ᴛʜᴜᴍʙɴᴀɪʟ ᴏꜰ ᴛʜᴇ ᴏʀɪɢɪɴɪᴀʟ ꜰɪʟᴇ ᴛᴏ ꜱᴇᴛ ɪɴ ʀᴇɴᴀᴍᴇᴅ ꜰɪʟᴇ"""
+É´á´á´›á´‡: Éªêœ° É´á´ á´›Êœá´œá´Ê™É´á´€ÉªÊŸ êœ±á´€á´ á´‡á´… ÉªÉ´ Ê™á´á´› á´›Êœá´‡É´, Éªá´› á´¡ÉªÊŸÊŸ á´œsá´‡ á´›Êœá´œá´Ê™É´á´€ÉªÊŸ á´êœ° á´›Êœá´‡ á´Ê€ÉªÉ¢ÉªÉ´Éªá´€ÊŸ êœ°ÉªÊŸá´‡ á´›á´ êœ±á´‡á´› ÉªÉ´ Ê€á´‡É´á´€á´á´‡á´… êœ°ÉªÊŸá´‡"""
 
-    MEDIA_FORMAT_TXT = """<b><u>» ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ</u></b>
+    MEDIA_FORMAT_TXT = """<b><u>Â» êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› êœ°ÉªÊ€êœ±á´›</u></b>
 
-<b>ɪᴍᴘᴏʀᴛᴀɴᴛ:</b> ʏᴏᴜ ᴍᴜꜱᴛ ꜱᴇᴛ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ʙᴇꜰᴏʀᴇ ꜱᴇɴᴅɪɴɢ ꜰɪʟᴇꜱ!
+<b>Éªá´á´˜á´Ê€á´›á´€É´á´›:</b> Êá´á´œ á´á´œêœ±á´› êœ±á´‡á´› Êá´á´œÊ€ á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› Ê™á´‡êœ°á´Ê€á´‡ êœ±á´‡É´á´…ÉªÉ´É¢ êœ°ÉªÊŸá´‡êœ±!
 
-<b>📁 File Format:</b>
-• ꜰɪʟᴇs ᴡɪʟʟ ʙᴇ sᴇɴᴛ ᴀs ᴅᴏᴄᴜᴍᴇɴᴛs
-• ᴘʀᴇsᴇʀᴠᴇs ᴏʀɪɢɪɴᴀʟ ꜰɪʟᴇ ᴛʏᴘᴇ
-• ꜰᴀsᴛᴇʀ ᴘʀᴏᴄᴇssɪɴɢ
+<b>ðŸ“ File Format:</b>
+â€¢ êœ°ÉªÊŸá´‡s á´¡ÉªÊŸÊŸ Ê™á´‡ sá´‡É´á´› á´€s á´…á´á´„á´œá´á´‡É´á´›s
+â€¢ á´˜Ê€á´‡sá´‡Ê€á´ á´‡s á´Ê€ÉªÉ¢ÉªÉ´á´€ÊŸ êœ°ÉªÊŸá´‡ á´›Êá´˜á´‡
+â€¢ êœ°á´€sá´›á´‡Ê€ á´˜Ê€á´á´„á´‡ssÉªÉ´É¢
 
-<b>🎬 Video Format:</b>
-• ᴀʟʟ ꜰɪʟᴇs ᴡɪʟʟ ʙᴇ ᴄᴏɴᴠᴇʀᴛᴇᴅ ᴛᴏ ᴍᴘ4 ᴠɪᴅᴇᴏ
-• ᴠɪᴅᴇᴏ ꜰʀᴀᴍᴇ ᴍᴀᴛᴄʜᴇs ᴛʜᴜᴍʙɴᴀɪʟ ꜱɪᴢᴇ & ʀᴀᴛɪᴏ
-• ᴘᴇʀꜰᴇᴄᴛ ꜰᴏʀ ᴠɪᴅᴇᴏ ᴘʟᴀᴛꜰᴏʀᴍs
+<b>ðŸŽ¬ Video Format:</b>
+â€¢ á´€ÊŸÊŸ êœ°ÉªÊŸá´‡s á´¡ÉªÊŸÊŸ Ê™á´‡ á´„á´É´á´ á´‡Ê€á´›á´‡á´… á´›á´ á´á´˜4 á´ Éªá´…á´‡á´
+â€¢ á´ Éªá´…á´‡á´ êœ°Ê€á´€á´á´‡ á´á´€á´›á´„Êœá´‡s á´›Êœá´œá´Ê™É´á´€ÉªÊŸ êœ±Éªá´¢á´‡ & Ê€á´€á´›Éªá´
+â€¢ á´˜á´‡Ê€êœ°á´‡á´„á´› êœ°á´Ê€ á´ Éªá´…á´‡á´ á´˜ÊŸá´€á´›êœ°á´Ê€á´s
 
-<b>ʜᴏᴡ ᴛᴏ ᴜsᴇ:</b>
-1. /setmedia - ꜱᴇʟᴇᴄᴛ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ
-2. /autorename - ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ
-3. ꜱᴇɴᴅ ᴘʜᴏᴛᴏ - ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ (ᴏᴘᴛɪᴏɴᴀʟ)
-4. ꜱᴇɴᴅ ᴀɴʏ ꜰɪʟᴇ - ᴀᴜᴛᴏᴍᴀᴛɪᴄ ᴘʀᴏᴄᴇssɪɴɢ"""
+<b>Êœá´á´¡ á´›á´ á´œsá´‡:</b>
+1. /setmedia - êœ±á´‡ÊŸá´‡á´„á´› Êá´á´œÊ€ á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´›
+2. /autorename - êœ±á´‡á´› Ê€á´‡É´á´€á´á´‡ êœ°á´Ê€á´á´€á´›
+3. êœ±á´‡É´á´… á´˜Êœá´á´›á´ - êœ±á´‡á´› á´›Êœá´œá´Ê™É´á´€ÉªÊŸ (á´á´˜á´›Éªá´É´á´€ÊŸ)
+4. êœ±á´‡É´á´… á´€É´Ê êœ°ÉªÊŸá´‡ - á´€á´œá´›á´á´á´€á´›Éªá´„ á´˜Ê€á´á´„á´‡ssÉªÉ´É¢"""
 
     PROGRESS_BAR = """\n
-<b>» Size</b> : {1} | {2}
-<b>» Done</b> : {0}%
-<b>» Speed</b> : {3}/s
-<b>» ETA</b> : {4} """
+<b>Â» Size</b> : {1} | {2}
+<b>Â» Done</b> : {0}%
+<b>Â» Speed</b> : {3}/s
+<b>Â» ETA</b> : {4} """
 
-    HELP_TXT = """<b>ʜᴇʀᴇ ɪs ʜᴇʟᴘ ᴍᴇɴᴜ ɪᴍᴘᴏʀᴛᴀɴᴔ ᴄᴏᴍᴍᴀɴᴅs:
+    HELP_TXT = """<b>Êœá´‡Ê€á´‡ Éªs Êœá´‡ÊŸá´˜ á´á´‡É´á´œ Éªá´á´˜á´Ê€á´›á´€É´á´” á´„á´á´á´á´€É´á´…s:
 
-ᴀᴡᴇsᴏᴍᴇ ғᴇᴀᴛᴜʀᴇs🫧
+á´€á´¡á´‡sá´á´á´‡ Ò“á´‡á´€á´›á´œÊ€á´‡sðŸ«§
 
-ʀᴇɴᴀᴍᴇ ʙᴏᴛ ɪs ᴀ ʜᴀɴᴅʏ ᴛᴏᴏʟ ᴛʜᴀᴛ ʜᴇʟᴘs ʏᴏᴜ ʀᴇɴᴀᴍᴇ ᴀɴᴅ ᴍᴀɴᴀɢᴇ ʏᴏᴜʀ ꜰɪʟᴇs ᴇꜰꜰᴏʀᴛʟᴇssʟʏ.
+Ê€á´‡É´á´€á´á´‡ Ê™á´á´› Éªs á´€ Êœá´€É´á´…Ê á´›á´á´ÊŸ á´›Êœá´€á´› Êœá´‡ÊŸá´˜s Êá´á´œ Ê€á´‡É´á´€á´á´‡ á´€É´á´… á´á´€É´á´€É¢á´‡ Êá´á´œÊ€ êœ°ÉªÊŸá´‡s á´‡êœ°êœ°á´Ê€á´›ÊŸá´‡ssÊŸÊ.
 
-<b>ꜱᴇᴛᴜᴘ ꜱᴛᴇᴘs:</b>
-1. /setmedia - ꜱᴇᴛ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ
-2. /autorename - ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ
-3. ꜱᴇɴᴅ ᴘʜᴏᴛᴏ - ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ
-4. ꜱᴇɴᴅ ꜰɪʟᴇs - ᴀᴜᴛᴏ ᴘʀᴏᴄᴇssɪɴɢ
+<b>êœ±á´‡á´›á´œá´˜ êœ±á´›á´‡á´˜s:</b>
+1. /setmedia - êœ±á´‡á´› Êá´á´œÊ€ á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› êœ°ÉªÊ€êœ±á´›
+2. /autorename - êœ±á´‡á´› Ê€á´‡É´á´€á´á´‡ êœ°á´Ê€á´á´€á´›
+3. êœ±á´‡É´á´… á´˜Êœá´á´›á´ - êœ±á´‡á´› á´›Êœá´œá´Ê™É´á´€ÉªÊŸ
+4. êœ±á´‡É´á´… êœ°ÉªÊŸá´‡s - á´€á´œá´›á´ á´˜Ê€á´á´„á´‡ssÉªÉ´É¢
 
-<b>ᴏᴛʜᴇʀ ᴄᴏᴍᴍᴀɴᴅs:</b>
-➲ /set_caption: ꜱᴇᴛ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ
-➲ /metadata: ᴛᴜʀɴ ᴏɴ/ᴏꜰꜰ ᴍᴇᴛᴀᴅᴀᴛᴀ
-➲ /help: ɢᴇᴛ ᴍᴏʀᴇ ʜᴇʟᴘ</b>"""
+<b>á´á´›Êœá´‡Ê€ á´„á´á´á´á´€É´á´…s:</b>
+âž² /set_caption: êœ±á´‡á´› á´„á´œsá´›á´á´ á´„á´€á´˜á´›Éªá´É´
+âž² /metadata: á´›á´œÊ€É´ á´É´/á´êœ°êœ° á´á´‡á´›á´€á´…á´€á´›á´€
+âž² /help: É¢á´‡á´› á´á´Ê€á´‡ Êœá´‡ÊŸá´˜</b>"""
     
-    META_TXT = """<b><u>» How to Set Metadata</u></b>
+    META_TXT = """<b><u>Â» How to Set Metadata</u></b>
 
 <b>Available metadata commands:</b>
-➲ /settitle - Set the title metadata
-➲ /setauthor - Set the author metadata
-➲ /setartist - Set the artist metadata  
-➲ /setaudio - Set the audio track title
-➲ /setsubtitle - Set the subtitle track title
-➲ /setvideo - Set the video track title
+âž² /settitle - Set the title metadata
+âž² /setauthor - Set the author metadata
+âž² /setartist - Set the artist metadata  
+âž² /setaudio - Set the audio track title
+âž² /setsubtitle - Set the subtitle track title
+âž² /setvideo - Set the video track title
 
 <b>Example:</b>
 <code>/settitle Encoded by @Codeflix_Bots</code>
@@ -306,9 +308,9 @@ def TimeFormatter(milliseconds: int) -> str:
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days, hours = divmod(hours, 24)
-    tmp = ((str(days) + "ᴅ, ") if days else "") + \
-          ((str(hours) + "ʜ, ") if hours else "") + \
-          ((str(minutes) + "ᴍ, ") if minutes else "") + \
+    tmp = ((str(days) + "á´…, ") if days else "") + \
+          ((str(hours) + "Êœ, ") if hours else "") + \
+          ((str(minutes) + "á´, ") if minutes else "") + \
           ((str(seconds) + "s, ") if seconds else "")
     return tmp[:-2] or "0 s"
 
@@ -326,8 +328,8 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
         estimated_total_time = TimeFormatter(milliseconds=estimated_total_time)
 
         progress = "{0}{1}".format(
-            ''.join(["█" for _ in range(math.floor(percentage / 5))]),
-            ''.join(["░" for _ in range(20 - math.floor(percentage / 5))])
+            ''.join(["â–ˆ" for _ in range(math.floor(percentage / 5))]),
+            ''.join(["â–‘" for _ in range(20 - math.floor(percentage / 5))])
         )
         
         tmp = progress + Txt.PROGRESS_BAR.format(
@@ -342,7 +344,7 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
             await message.edit(
                 text=f"{ud_type}\n\n{tmp}",
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("• ᴄᴀɴᴄᴇʟ •", callback_data="close")]
+                    [InlineKeyboardButton("â€¢ á´„á´€É´á´„á´‡ÊŸ â€¢", callback_data="close")]
                 ])
             )
         except:
@@ -360,7 +362,7 @@ async def check_anti_nsfw(filename, message):
     lower_name = filename.lower()
     for keyword in nsfw_keywords:
         if keyword in lower_name:
-            await message.reply_text("❌ NSFW content detected. File not processed.")
+            await message.reply_text("âŒ NSFW content detected. File not processed.")
             return True
     return False
 
@@ -441,14 +443,16 @@ def convert_to_video_format(input_path, output_path, thumb_path=None):
     # Check if input is video
     if input_ext in Config.SUPPORTED_VIDEO_FORMATS:
         # Video to video conversion - resize to thumbnail dimensions
+        # Preserve audio and subtitle tracks
         cmd.extend([
             '-i', input_path,
             '-vf', f'scale={thumb_width}:{thumb_height}:force_original_aspect_ratio=decrease,pad={thumb_width}:{thumb_height}:(ow-iw)/2:(oh-ih)/2,setsar=1',
             '-c:v', 'libx264',
             '-preset', 'medium',
             '-crf', '23',
-            '-c:a', 'aac',
-            '-b:a', '128k',
+            '-c:a', 'copy',  # Copy audio stream without re-encoding
+            '-c:s', 'copy',  # Copy subtitle stream without re-encoding
+            '-map', '0',  # Map all streams from input
             '-movflags', '+faststart',
             '-pix_fmt', 'yuv420p',
             '-y', output_path
@@ -477,8 +481,7 @@ def convert_to_video_format(input_path, output_path, thumb_path=None):
                 '-i', input_path,
                 '-vf', f'scale={thumb_width}:{thumb_height},setsar=1',
                 '-c:v', 'libx264',
-                '-c:a', 'aac',
-                '-b:a', '192k',
+                '-c:a', 'copy',  # Copy audio without re-encoding
                 '-shortest',
                 '-pix_fmt', 'yuv420p',
                 '-y', output_path
@@ -489,8 +492,7 @@ def convert_to_video_format(input_path, output_path, thumb_path=None):
                 '-i', f'color=c=black:s={thumb_width}x{thumb_height}:r=25',
                 '-i', input_path,
                 '-c:v', 'libx264',
-                '-c:a', 'aac',
-                '-b:a', '192k',
+                '-c:a', 'copy',
                 '-shortest',
                 '-pix_fmt', 'yuv420p',
                 '-y', output_path
@@ -543,9 +545,16 @@ async def convert_to_video_async(input_path, output_path, thumb_path):
     )
 
 async def add_metadata(input_path, output_path, user_id):
-    """Add metadata to media file using ffmpeg"""
+    """Add metadata to media file using ffmpeg - FIXED to preserve audio and subtitles"""
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"Input file not found: {input_path}")
+    
+    # Check if metadata is enabled
+    metadata_enabled = await db.get_metadata(user_id)
+    if not metadata_enabled:
+        # If metadata is disabled, just copy the file
+        shutil.copy2(input_path, output_path)
+        return output_path
     
     # Get metadata values from database
     title = await db.get_title(user_id)
@@ -558,41 +567,33 @@ async def add_metadata(input_path, output_path, user_id):
     # Determine file extension
     file_ext = os.path.splitext(output_path)[1].lower()
     
-    # Prepare metadata arguments
-    metadata_args = []
-    
-    # Add standard metadata fields
-    if title:
-        metadata_args.extend(['-metadata', f'title={title}'])
-    if artist:
-        metadata_args.extend(['-metadata', f'artist={artist}'])
-    if author:
-        metadata_args.extend(['-metadata', f'author={author}'])
-    
-    # Add stream-specific metadata
-    if video_title:
-        metadata_args.extend(['-metadata:s:v', f'title={video_title}'])
-    if audio_title:
-        metadata_args.extend(['-metadata:s:a', f'title={audio_title}'])
-    if subtitle_title:
-        metadata_args.extend(['-metadata:s:s', f'title={subtitle_title}'])
-    
-    # Build FFmpeg command
+    # Build FFmpeg command with stream copying to preserve audio and subtitles
     cmd = [
         'ffmpeg',
         '-i', input_path,
-        '-map_metadata', '0',
-        '-c', 'copy',
+        '-c', 'copy',  # Copy all codecs
+        '-map', '0',   # Map all streams
     ]
+    
+    # Add metadata only if it's not empty
+    if title:
+        cmd.extend(['-metadata', f'title={title}'])
+    if artist:
+        cmd.extend(['-metadata', f'artist={artist}'])
+    if author:
+        cmd.extend(['-metadata', f'author={author}'])
+    
+    # Add stream-specific metadata
+    if video_title:
+        cmd.extend(['-metadata:s:v:0', f'title={video_title}'])
+    if audio_title:
+        cmd.extend(['-metadata:s:a:0', f'title={audio_title}'])
+    if subtitle_title:
+        cmd.extend(['-metadata:s:s:0', f'title={subtitle_title}'])
     
     # Add format-specific flags
     if file_ext in ['.mp4', '.m4v', '.mov']:
-        cmd.extend(['-movflags', 'use_metadata_tags'])
-    elif file_ext in ['.mkv', '.webm']:
-        cmd.extend(['-map_metadata', '0', '-c', 'copy'])
-    
-    # Add metadata arguments
-    cmd.extend(metadata_args)
+        cmd.extend(['-movflags', '+faststart'])
     
     # Add output file
     cmd.extend(['-y', output_path])
@@ -744,17 +745,17 @@ async def start_handler(client, message):
     
     # Send welcome message with appropriate buttons
     buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
+        [InlineKeyboardButton("â€¢ á´Ê á´€ÊŸÊŸ á´„á´á´á´á´€É´á´…s â€¢", callback_data='help')],
         [
-            InlineKeyboardButton('• ᴜᴘᴅᴀᴛᴇs', url='https://t.me/Codeflix_Bots'),
-            InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ •', url='https://t.me/CodeflixSupport')
+            InlineKeyboardButton('â€¢ á´œá´˜á´…á´€á´›á´‡s', url='https://t.me/Codeflix_Bots'),
+            InlineKeyboardButton('sá´œá´˜á´˜á´Ê€á´› â€¢', url='https://t.me/CodeflixSupport')
         ]
     ])
     
     if not media_format_set:
         # Add media format button if not set
         buttons.inline_keyboard.insert(0, [
-            InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')
+            InlineKeyboardButton("âš™ï¸ êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´›", callback_data='set_media_first')
         ])
     
     if Config.START_PIC:
@@ -774,21 +775,21 @@ async def start_handler(client, message):
 async def setmedia_handler(client, message):
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("📁 File Format", callback_data="media_file"),
-            InlineKeyboardButton("🎬 Video Format", callback_data="media_video")
+            InlineKeyboardButton("ðŸ“ File Format", callback_data="media_file"),
+            InlineKeyboardButton("ðŸŽ¬ Video Format", callback_data="media_video")
         ],
-        [InlineKeyboardButton("🔙 Back", callback_data="help")]
+        [InlineKeyboardButton("ðŸ”™ Back", callback_data="help")]
     ])
     
     current_format = await db.get_media_format(message.from_user.id)
-    format_status = f"`{current_format.capitalize()}`" if current_format else "❌ **Not Set!**"
+    format_status = f"`{current_format.capitalize()}`" if current_format else "âŒ **Not Set!**"
     
     await message.reply_text(
-        f"**⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ**\n\n"
+        f"**âš™ï¸ êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› êœ°ÉªÊ€êœ±á´›**\n\n"
         f"**Current Format:** {format_status}\n\n"
-        "**📁 File Format:** Files will be sent as documents\n"
-        "**🎬 Video Format:** All files converted to MP4 video\n\n"
-        "⚠️ **You must set media format before sending files!**",
+        "**ðŸ“ File Format:** Files will be sent as documents\n"
+        "**ðŸŽ¬ Video Format:** All files converted to MP4 video\n\n"
+        "âš ï¸ **You must set media format before sending files!**",
         reply_markup=buttons
     )
 
@@ -799,22 +800,22 @@ async def help_handler(client, message):
     media_format_set = await db.is_media_format_set(user_id)
     
     buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("• ᴀᴜᴛᴏ ʀᴇɴᴀᴍᴇ ғᴏʀᴍᴀᴛ •", callback_data='file_names')],
+        [InlineKeyboardButton("â€¢ á´€á´œá´›á´ Ê€á´‡É´á´€á´á´‡ Ò“á´Ê€á´á´€á´› â€¢", callback_data='file_names')],
         [
-            InlineKeyboardButton('• ᴛʜᴜᴍʙɴᴀɪʟ', callback_data='thumbnail'),
-            InlineKeyboardButton('ᴄᴀᴘᴛɪᴏɴ •', callback_data='caption')
+            InlineKeyboardButton('â€¢ á´›Êœá´œá´Ê™É´á´€ÉªÊŸ', callback_data='thumbnail'),
+            InlineKeyboardButton('á´„á´€á´˜á´›Éªá´É´ â€¢', callback_data='caption')
         ],
         [
-            InlineKeyboardButton('• ᴍᴇᴛᴀᴅᴀᴛᴀ', callback_data='meta'),
-            InlineKeyboardButton('ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ •', callback_data='media_format')
+            InlineKeyboardButton('â€¢ á´á´‡á´›á´€á´…á´€á´›á´€', callback_data='meta'),
+            InlineKeyboardButton('á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› â€¢', callback_data='media_format')
         ],
-        [InlineKeyboardButton('• ʜᴏᴍᴇ', callback_data='home')]
+        [InlineKeyboardButton('â€¢ Êœá´á´á´‡', callback_data='home')]
     ])
     
     # Add warning if media format not set
     if not media_format_set:
         buttons.inline_keyboard.insert(0, [
-            InlineKeyboardButton("⚠️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ", callback_data='set_media_first')
+            InlineKeyboardButton("âš ï¸ êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› êœ°ÉªÊ€êœ±á´›", callback_data='set_media_first')
         ])
     
     await message.reply_text(
@@ -831,12 +832,12 @@ async def autorename_handler(client, message):
     # Check if media format is set
     if not await db.is_media_format_set(user_id):
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')],
-            [InlineKeyboardButton("🔙 Back", callback_data='help')]
+            [InlineKeyboardButton("âš™ï¸ êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´›", callback_data='set_media_first')],
+            [InlineKeyboardButton("ðŸ”™ Back", callback_data='help')]
         ])
         
         await message.reply_text(
-            "❌ **Please set media format first!**\n\n"
+            "âŒ **Please set media format first!**\n\n"
             "You must set your media format before using the rename feature.\n"
             "Use /setmedia or click the button below.",
             reply_markup=buttons
@@ -861,7 +862,7 @@ async def autorename_handler(client, message):
     await db.set_format_template(user_id, format_template)
     
     await message.reply_text(
-        f"**✅ Rename format set successfully!**\n\n"
+        f"**âœ… Rename format set successfully!**\n\n"
         f"**Your format:** `{format_template}`\n\n"
         "Now you can send me any file to rename it automatically."
     )
@@ -882,7 +883,7 @@ async def set_caption_handler(client, message):
     
     caption = message.text.split(" ", 1)[1]
     await db.set_caption(message.from_user.id, caption)
-    await message.reply_text("✅ Caption set successfully!")
+    await message.reply_text("âœ… Caption set successfully!")
 
 # View caption command
 @app.on_message(filters.command(["see_caption", "view_caption"]) & filters.private)
@@ -891,13 +892,13 @@ async def see_caption_handler(client, message):
     if caption:
         await message.reply_text(f"**Your caption:**\n\n`{caption}`")
     else:
-        await message.reply_text("❌ No caption set. Use /set_caption to set one.")
+        await message.reply_text("âŒ No caption set. Use /set_caption to set one.")
 
 # Delete caption command
 @app.on_message(filters.command("del_caption") & filters.private)
 async def del_caption_handler(client, message):
     await db.set_caption(message.from_user.id, None)
-    await message.reply_text("✅ Caption deleted successfully!")
+    await message.reply_text("âœ… Caption deleted successfully!")
 
 # View thumbnail command
 @app.on_message(filters.command(["view_thumb", "viewthumb"]) & filters.private)
@@ -906,25 +907,25 @@ async def view_thumb_handler(client, message):
     if thumb:
         await client.send_photo(message.chat.id, thumb)
     else:
-        await message.reply_text("❌ No thumbnail set. Send a photo to set as thumbnail.")
+        await message.reply_text("âŒ No thumbnail set. Send a photo to set as thumbnail.")
 
 # Delete thumbnail command
 @app.on_message(filters.command(["del_thumb", "delthumb"]) & filters.private)
 async def del_thumb_handler(client, message):
     await db.set_thumbnail(message.from_user.id, None)
-    await message.reply_text("✅ Thumbnail deleted successfully!")
+    await message.reply_text("âœ… Thumbnail deleted successfully!")
 
 # Set thumbnail from photo
 @app.on_message(filters.private & filters.photo)
 async def set_thumb_handler(client, message):
     await db.set_thumbnail(message.from_user.id, message.photo.file_id)
-    await message.reply_text("✅ Thumbnail saved successfully!")
+    await message.reply_text("âœ… Thumbnail saved successfully!")
 
 # Metadata command
 @app.on_message(filters.command("metadata") & filters.private)
 async def metadata_handler(client, message):
     metadata_status = await db.get_metadata(message.from_user.id)
-    status_text = "ON ✅" if metadata_status else "OFF ❌"
+    status_text = "ON âœ…" if metadata_status else "OFF âŒ"
     
     # Get current metadata values for display
     title = await db.get_title(message.from_user.id)
@@ -935,14 +936,14 @@ async def metadata_handler(client, message):
     subtitle = await db.get_subtitle(message.from_user.id)
     
     text = f"""
-**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪs ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
+**ãŠ‹ Yá´á´œÊ€ Má´‡á´›á´€á´…á´€á´›á´€ Éªs á´„á´œÊ€Ê€á´‡É´á´›ÊŸÊ: {status_text}**
 
-**◈ Tɪᴛʟᴇ ▹** `{title if title else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴛʜᴏʀ ▹** `{author if author else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aʀᴛɪsᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴅɪᴏ ▹** `{audio if audio else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Sᴜʙᴛɪᴛʟᴇ ▹** `{subtitle if subtitle else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Vɪᴅᴇᴏ ▹** `{video if video else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
+**â—ˆ TÉªá´›ÊŸá´‡ â–¹** `{title if title else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ Aá´œá´›Êœá´Ê€ â–¹** `{author if author else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ AÊ€á´›Éªsá´› â–¹** `{artist if artist else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ Aá´œá´…Éªá´ â–¹** `{audio if audio else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ Sá´œÊ™á´›Éªá´›ÊŸá´‡ â–¹** `{subtitle if subtitle else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ VÉªá´…á´‡á´ â–¹** `{video if video else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
     """
     
     buttons = InlineKeyboardMarkup([
@@ -954,7 +955,7 @@ async def metadata_handler(client, message):
             InlineKeyboardButton("How to Set Metadata", callback_data="metainfo")
         ],
         [
-            InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")
+            InlineKeyboardButton("â€¢ Ê™á´€á´„á´‹", callback_data="help")
         ]
     ])
     
@@ -969,55 +970,55 @@ async def metadata_handler(client, message):
 async def settitle_handler(client, message):
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Gɪᴠᴇ Tʜᴇ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /settitle Encoded By @Codeflix_Bots**")
+            "**GÉªá´ á´‡ TÊœá´‡ TÉªá´›ÊŸá´‡\n\nExá´€á´á´©ÊŸá´‡:- /settitle Encoded By @Codeflix_Bots**")
     title = message.text.split(" ", 1)[1]
     await db.set_title(message.from_user.id, title=title)
-    await message.reply_text("**✅ Tɪᴛʟᴇ Sᴀᴠᴇᴅ**")
+    await message.reply_text("**âœ… TÉªá´›ÊŸá´‡ Sá´€á´ á´‡á´…**")
 
 @app.on_message(filters.private & filters.command('setauthor'))
 async def setauthor_handler(client, message):
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Gɪᴠᴇ Tʜᴇ Aᴜᴛʜᴏʀ\n\nExᴀᴍᴩʟᴇ:- /setauthor @Codeflix_Bots**")
+            "**GÉªá´ á´‡ TÊœá´‡ Aá´œá´›Êœá´Ê€\n\nExá´€á´á´©ÊŸá´‡:- /setauthor @Codeflix_Bots**")
     author = message.text.split(" ", 1)[1]
     await db.set_author(message.from_user.id, author=author)
-    await message.reply_text("**✅ Aᴜᴛʜᴏʀ Sᴀᴠᴇᴅ**")
+    await message.reply_text("**âœ… Aá´œá´›Êœá´Ê€ Sá´€á´ á´‡á´…**")
 
 @app.on_message(filters.private & filters.command('setartist'))
 async def setartist_handler(client, message):
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Gɪᴠᴇ Tʜᴇ Aʀᴛɪsᴛ\n\nExᴀᴍᴩʟᴇ:- /setartist @Codeflix_Bots**")
+            "**GÉªá´ á´‡ TÊœá´‡ AÊ€á´›Éªsá´›\n\nExá´€á´á´©ÊŸá´‡:- /setartist @Codeflix_Bots**")
     artist = message.text.split(" ", 1)[1]
     await db.set_artist(message.from_user.id, artist=artist)
-    await message.reply_text("**✅ Aʀᴛɪsᴛ Sᴀᴠᴇᴅ**")
+    await message.reply_text("**âœ… AÊ€á´›Éªsá´› Sá´€á´ á´‡á´…**")
 
 @app.on_message(filters.private & filters.command('setaudio'))
 async def setaudio_handler(client, message):
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Gɪᴠᴇ Tʜᴇ Aᴜᴅɪᴏ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /setaudio @Codeflix_Bots**")
+            "**GÉªá´ á´‡ TÊœá´‡ Aá´œá´…Éªá´ TÉªá´›ÊŸá´‡\n\nExá´€á´á´©ÊŸá´‡:- /setaudio @Codeflix_Bots**")
     audio = message.text.split(" ", 1)[1]
     await db.set_audio(message.from_user.id, audio=audio)
-    await message.reply_text("**✅ Aᴜᴅɪᴏ Sᴀᴠᴇᴅ**")
+    await message.reply_text("**âœ… Aá´œá´…Éªá´ Sá´€á´ á´‡á´…**")
 
 @app.on_message(filters.private & filters.command('setsubtitle'))
 async def setsubtitle_handler(client, message):
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Gɪᴠᴇ Tʜᴇ Sᴜʙᴛɪᴛʟᴇ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /setsubtitle @Codeflix_Bots**")
+            "**GÉªá´ á´‡ TÊœá´‡ Sá´œÊ™á´›Éªá´›ÊŸá´‡ TÉªá´›ÊŸá´‡\n\nExá´€á´á´©ÊŸá´‡:- /setsubtitle @Codeflix_Bots**")
     subtitle = message.text.split(" ", 1)[1]
     await db.set_subtitle(message.from_user.id, subtitle=subtitle)
-    await message.reply_text("**✅ Sᴜʙᴛɪᴛʟᴇ Sᴀᴠᴇᴅ**")
+    await message.reply_text("**âœ… Sá´œÊ™á´›Éªá´›ÊŸá´‡ Sá´€á´ á´‡á´…**")
 
 @app.on_message(filters.private & filters.command('setvideo'))
 async def setvideo_handler(client, message):
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Gɪᴠᴇ Tʜᴇ Vɪᴅᴇᴏ Tɪᴛʟᴇ\n\nExᴀᴍᴩʟᴇ:- /setvideo Encoded by @Codeflix_Bots**")
+            "**GÉªá´ á´‡ TÊœá´‡ VÉªá´…á´‡á´ TÉªá´›ÊŸá´‡\n\nExá´€á´á´©ÊŸá´‡:- /setvideo Encoded by @Codeflix_Bots**")
     video = message.text.split(" ", 1)[1]
     await db.set_video(message.from_user.id, video=video)
-    await message.reply_text("**✅ Vɪᴅᴇᴏ Sᴀᴠᴇᴅ**")
+    await message.reply_text("**âœ… VÉªá´…á´‡á´ Sá´€á´ á´‡á´…**")
 
 # Main file handler - Auto processes based on user's media format setting
 @app.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
@@ -1027,17 +1028,17 @@ async def auto_file_handler(client, message):
     # Check if media format is set
     if not await db.is_media_format_set(user_id):
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')],
-            [InlineKeyboardButton("🔙 Back", callback_data='help')]
+            [InlineKeyboardButton("âš™ï¸ êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´›", callback_data='set_media_first')],
+            [InlineKeyboardButton("ðŸ”™ Back", callback_data='help')]
         ])
         
         await message.reply_text(
-            "❌ **Please set media format first!**\n\n"
+            "âŒ **Please set media format first!**\n\n"
             "You must set your media format before sending files.\n"
             "Use /setmedia or click the button below.\n\n"
             "**Why?** This determines how your files will be processed:\n"
-            "• 📁 File Format: As documents\n"
-            "• 🎬 Video Format: As videos",
+            "â€¢ ðŸ" File Format: As documents\n"
+            "â€¢ ðŸŽ¬ Video Format: As videos",
             reply_markup=buttons
         )
         return
@@ -1046,7 +1047,7 @@ async def auto_file_handler(client, message):
     format_template = await db.get_format_template(user_id)
     if not format_template:
         await message.reply_text(
-            "❌ **Please set a rename format first!**\n\n"
+            "âŒ **Please set a rename format first!**\n\n"
             "Use: `/autorename Your Format Here`\n\n"
             "**Example:** `/autorename {filename} [S{season}E{episode}]`"
         )
@@ -1088,7 +1089,7 @@ async def auto_file_handler(client, message):
     media_format = await db.get_media_format(user_id)
     
     # Show processing message
-    format_icon = "🎬" if media_format == "video" else "📁"
+    format_icon = "ðŸŽ¬" if media_format == "video" else "ðŸ""
     msg = await message.reply_text(f"{format_icon} **Processing as {media_format.capitalize()}...**")
     
     # Generate unique filename
@@ -1102,11 +1103,11 @@ async def auto_file_handler(client, message):
         file_path = await message.download(
             file_name=download_path,
             progress=progress_for_pyrogram,
-            progress_args=("📥 Downloading...", msg, start_time)
+            progress_args=("ðŸ""¥ Downloading...", msg, start_time)
         )
         
         if not os.path.exists(file_path):
-            await msg.edit_text("❌ Download failed!")
+            await msg.edit_text("âŒ Download failed!")
             return
         
         # Get actual file size
@@ -1137,33 +1138,33 @@ async def auto_file_handler(client, message):
             new_filename = os.path.splitext(new_filename)[0] + ".mp4"
             output_path = f"converted/{user_id}_{timestamp}.mp4"
             
-            await msg.edit_text("🎬 **Converting to video format...**")
+            await msg.edit_text("ðŸŽ¬ **Converting to video format...**")
             try:
                 output_path = await convert_to_video_async(file_path, output_path, thumb_path)
+                
+                # Apply metadata if enabled
+                metadata_enabled = await db.get_metadata(user_id)
+                if metadata_enabled and os.path.exists(output_path):
+                    metadata_path = f"temp/{user_id}_metadata_{timestamp}.mp4"
+                    final_output_path = await add_metadata(output_path, metadata_path, user_id)
+                    if output_path != final_output_path:
+                        await cleanup_files(output_path)
+                        output_path = final_output_path
+                else:
+                    final_output_path = output_path
+                    
             except Exception as e:
-                await msg.edit_text(f"❌ Video conversion failed: {str(e)[:100]}")
+                await msg.edit_text(f"âŒ Video conversion failed: {str(e)[:100]}")
                 # Fallback to file format
                 output_path = file_path
                 media_format = "file"
                 new_filename = new_filename.replace('.mp4', original_ext)
+                final_output_path = output_path
         else:
             # File format - keep original
             new_filename = new_filename + original_ext
             output_path = file_path
-        
-        # Process metadata if enabled
-        metadata_enabled = await db.get_metadata(user_id)
-        final_output_path = output_path
-        
-        if metadata_enabled and os.path.exists(output_path):
-            try:
-                metadata_path = f"temp/{user_id}_metadata_{int(time.time())}{os.path.splitext(output_path)[1]}"
-                final_output_path = await add_metadata(output_path, metadata_path, user_id)
-                if output_path != file_path and output_path != final_output_path:
-                    await cleanup_files(output_path)
-            except Exception as e:
-                print(f"Metadata error: {e}")
-                # Continue without metadata
+            final_output_path = output_path
         
         # Get caption
         caption_template = await db.get_caption(user_id) or "{filename}"
@@ -1172,7 +1173,7 @@ async def auto_file_handler(client, message):
                                  .replace("{duration}", str(timedelta(seconds=duration)) if duration else '00:00:00')
         
         # Upload file
-        await msg.edit_text("📤 **Uploading file...**")
+        await msg.edit_text("ðŸ""¤ **Uploading file...**")
         upload_start = time.time()
         
         if media_format == "video":
@@ -1194,7 +1195,7 @@ async def auto_file_handler(client, message):
                 thumb=thumb_path,
                 duration=int(video_duration),
                 progress=progress_for_pyrogram,
-                progress_args=("📤 Uploading...", msg, upload_start)
+                progress_args=("ðŸ""¤ Uploading...", msg, upload_start)
             )
         else:
             # Send as document
@@ -1205,19 +1206,19 @@ async def auto_file_handler(client, message):
                 thumb=thumb_path,
                 file_name=new_filename,
                 progress=progress_for_pyrogram,
-                progress_args=("📤 Uploading...", msg, upload_start)
+                progress_args=("ðŸ""¤ Uploading...", msg, upload_start)
             )
         
         # Success message
         await msg.delete()
         await message.reply_text(
-            f"✅ **File processed successfully as {media_format.capitalize()}!**\n"
+            f"âœ… **File processed successfully as {media_format.capitalize()}!**\n"
             f"**New name:** `{new_filename}`\n"
-            f"**Format:** {'🎬 Video' if media_format == 'video' else '📁 File'}"
+            f"**Format:** {'ðŸŽ¬ Video' if media_format == 'video' else 'ðŸ" File'}"
         )
         
     except Exception as e:
-        await msg.edit_text(f"❌ **Error:** {str(e)[:200]}")
+        await msg.edit_text(f"âŒ **Error:** {str(e)[:200]}")
         print(f"Error: {e}")
     finally:
         # Cleanup
@@ -1238,16 +1239,16 @@ async def callback_handler(client, query):
         media_format_set = await db.is_media_format_set(user_id)
         
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
+            [InlineKeyboardButton("â€¢ á´Ê á´€ÊŸÊŸ á´„á´á´á´á´€É´á´…s â€¢", callback_data='help')],
             [
-                InlineKeyboardButton('• ᴜᴘᴅᴀᴛᴇs', url='https://t.me/Codeflix_Bots'),
-                InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ •', url='https://t.me/CodeflixSupport')
+                InlineKeyboardButton('â€¢ á´œá´˜á´…á´€á´›á´‡s', url='https://t.me/Codeflix_Bots'),
+                InlineKeyboardButton('sá´œá´˜á´˜á´Ê€á´› â€¢', url='https://t.me/CodeflixSupport')
             ]
         ])
         
         if not media_format_set:
             buttons.inline_keyboard.insert(0, [
-                InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')
+                InlineKeyboardButton("âš™ï¸ êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´›", callback_data='set_media_first')
             ])
         
         await query.message.edit_text(
@@ -1259,10 +1260,10 @@ async def callback_handler(client, query):
     elif data == "set_media_first":
         buttons = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("📁 File Format", callback_data="media_file"),
-                InlineKeyboardButton("🎬 Video Format", callback_data="media_video")
+                InlineKeyboardButton("ðŸ" File Format", callback_data="media_file"),
+                InlineKeyboardButton("ðŸŽ¬ Video Format", callback_data="media_video")
             ],
-            [InlineKeyboardButton("🔙 Back", callback_data="home")]
+            [InlineKeyboardButton("ðŸ""™ Back", callback_data="home")]
         ])
         
         await query.message.edit_text(
@@ -1273,16 +1274,16 @@ async def callback_handler(client, query):
     
     elif data == "media_file":
         await db.set_media_format(user_id, "file")
-        await query.answer("✅ Media format set to File!")
+        await query.answer("âœ… Media format set to File!")
         
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📝 ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ", callback_data="file_names")],
-            [InlineKeyboardButton("🖼️ ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ", callback_data="thumbnail")],
-            [InlineKeyboardButton("🏠 ʜᴏᴍᴇ", callback_data="home")]
+            [InlineKeyboardButton("ðŸ"" êœ±á´‡á´› Ê€á´‡É´á´€á´á´‡ êœ°á´Ê€á´á´€á´›", callback_data="file_names")],
+            [InlineKeyboardButton("ðŸ""¼ï¸ êœ±á´‡á´› á´›Êœá´œá´Ê™É´á´€ÉªÊŸ", callback_data="thumbnail")],
+            [InlineKeyboardButton("ðŸ  Êœá´á´á´‡", callback_data="home")]
         ])
         
         await query.message.edit_text(
-            "✅ **Media format set to File!**\n\n"
+            "âœ… **Media format set to File!**\n\n"
             "**Now you can:**\n"
             "1. Set rename format with /autorename\n"
             "2. Set thumbnail by sending a photo\n"
@@ -1293,16 +1294,16 @@ async def callback_handler(client, query):
     
     elif data == "media_video":
         await db.set_media_format(user_id, "video")
-        await query.answer("✅ Media format set to Video!")
+        await query.answer("âœ… Media format set to Video!")
         
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📝 ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ", callback_data="file_names")],
-            [InlineKeyboardButton("🖼️ ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ", callback_data="thumbnail")],
-            [InlineKeyboardButton("🏠 ʜᴏᴍᴇ", callback_data="home")]
+            [InlineKeyboardButton("ðŸ"" êœ±á´‡á´› Ê€á´‡É´á´€á´á´‡ êœ°á´Ê€á´á´€á´›", callback_data="file_names")],
+            [InlineKeyboardButton("ðŸ""¼ï¸ êœ±á´‡á´› á´›Êœá´œá´Ê™É´á´€ÉªÊŸ", callback_data="thumbnail")],
+            [InlineKeyboardButton("ðŸ  Êœá´á´á´‡", callback_data="home")]
         ])
         
         await query.message.edit_text(
-            "✅ **Media format set to Video!**\n\n"
+            "âœ… **Media format set to Video!**\n\n"
             "**Important:** All files will be converted to MP4 video format.\n"
             "**Video frame will match thumbnail size and ratio.**\n\n"
             "**Now you can:**\n"
@@ -1317,21 +1318,21 @@ async def callback_handler(client, query):
         media_format_set = await db.is_media_format_set(user_id)
         
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("• ᴀᴜᴛᴏ ʀᴇɴᴀᴍᴇ ғᴏʀᴍᴀᴛ •", callback_data='file_names')],
+            [InlineKeyboardButton("â€¢ á´€á´œá´›á´ Ê€á´‡É´á´€á´á´‡ Ò"á´Ê€á´á´€á´› â€¢", callback_data='file_names')],
             [
-                InlineKeyboardButton('• ᴛʜᴜᴍʙɴᴀɪʟ', callback_data='thumbnail'),
-                InlineKeyboardButton('ᴄᴀᴘᴛɪᴏɴ •', callback_data='caption')
+                InlineKeyboardButton('â€¢ á´›Êœá´œá´Ê™É´á´€ÉªÊŸ', callback_data='thumbnail'),
+                InlineKeyboardButton('á´„á´€á´˜á´›Éªá´É´ â€¢', callback_data='caption')
             ],
             [
-                InlineKeyboardButton('• ᴍᴇᴛᴀᴅᴀᴛᴀ', callback_data='meta'),
-                InlineKeyboardButton('ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ •', callback_data='media_format')
+                InlineKeyboardButton('â€¢ á´á´‡á´›á´€á´…á´€á´›á´€', callback_data='meta'),
+                InlineKeyboardButton('á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› â€¢', callback_data='media_format')
             ],
-            [InlineKeyboardButton('• ʜᴏᴍᴇ', callback_data='home')]
+            [InlineKeyboardButton('â€¢ Êœá´á´á´‡', callback_data='home')]
         ])
         
         if not media_format_set:
             buttons.inline_keyboard.insert(0, [
-                InlineKeyboardButton("⚠️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ", callback_data='set_media_first')
+                InlineKeyboardButton("âš ï¸ êœ±á´‡á´› á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› êœ°ÉªÊ€êœ±á´›", callback_data='set_media_first')
             ])
         
         await query.message.edit_text(
@@ -1343,22 +1344,22 @@ async def callback_handler(client, query):
     elif data == "media_format":
         buttons = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("📁 File Format", callback_data="media_file"),
-                InlineKeyboardButton("🎬 Video Format", callback_data="media_video")
+                InlineKeyboardButton("ðŸ" File Format", callback_data="media_file"),
+                InlineKeyboardButton("ðŸŽ¬ Video Format", callback_data="media_video")
             ],
-            [InlineKeyboardButton("🔙 Back", callback_data="help")]
+            [InlineKeyboardButton("ðŸ""™ Back", callback_data="help")]
         ])
         
         current_format = await db.get_media_format(user_id)
-        format_status = f"`{current_format.capitalize()}`" if current_format else "❌ **Not Set!**"
+        format_status = f"`{current_format.capitalize()}`" if current_format else "âŒ **Not Set!**"
         
         await query.message.edit_text(
-            f"**⚙️ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜱᴇᴛᴛɪɴɢꜱ**\n\n"
+            f"**âš™ï¸ á´á´‡á´…Éªá´€ êœ°á´Ê€á´á´€á´› êœ±á´‡á´›á´›ÉªÉ´É¢êœ±**\n\n"
             f"**Current Format:** {format_status}\n\n"
             "**Select your media format:**\n"
-            "• **📁 File Format:** Send files as documents\n"
-            "• **🎬 Video Format:** Convert all files to video\n\n"
-            "⚠️ **This setting applies to ALL your files.**",
+            "â€¢ **ðŸ" File Format:** Send files as documents\n"
+            "â€¢ **ðŸŽ¬ Video Format:** Convert all files to video\n\n"
+            "âš ï¸ **This setting applies to ALL your files.**",
             reply_markup=buttons
         )
     
@@ -1367,7 +1368,7 @@ async def callback_handler(client, query):
         await query.message.edit_text(
             Txt.FILE_NAME_TXT.format(format_template=format_template),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")]
+                [InlineKeyboardButton("â€¢ Ê™á´€á´„á´‹", callback_data="help")]
             ]),
             disable_web_page_preview=True
         )
@@ -1376,7 +1377,7 @@ async def callback_handler(client, query):
         await query.message.edit_text(
             Txt.THUMBNAIL_TXT,
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")]
+                [InlineKeyboardButton("â€¢ Ê™á´€á´„á´‹", callback_data="help")]
             ]),
             disable_web_page_preview=True
         )
@@ -1385,14 +1386,14 @@ async def callback_handler(client, query):
         await query.message.edit_text(
             Txt.CAPTION_TXT,
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")]
+                [InlineKeyboardButton("â€¢ Ê™á´€á´„á´‹", callback_data="help")]
             ]),
             disable_web_page_preview=True
         )
     
     elif data == "meta":
         metadata_status = await db.get_metadata(user_id)
-        status_text = "ON ✅" if metadata_status else "OFF ❌"
+        status_text = "ON âœ…" if metadata_status else "OFF âŒ"
         
         title = await db.get_title(user_id)
         author = await db.get_author(user_id)
@@ -1402,14 +1403,14 @@ async def callback_handler(client, query):
         subtitle = await db.get_subtitle(user_id)
         
         text = f"""
-**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪs ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
+**ãŠ‹ Yá´á´œÊ€ Má´‡á´›á´€á´…á´€á´›á´€ Éªs á´„á´œÊ€Ê€á´‡É´á´›ÊŸÊ: {status_text}**
 
-**◈ Tɪᴛʟᴇ ▹** `{title if title else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴛʜᴏʀ ▹** `{author if author else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aʀᴛɪsᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴅɪᴏ ▹** `{audio if audio else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Sᴜʙᴛɪᴛʟᴇ ▹** `{subtitle if subtitle else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Vɪᴇᴏ ▹** `{video if video else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
+**â—ˆ TÉªá´›ÊŸá´‡ â–¹** `{title if title else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ Aá´œá´›Êœá´Ê€ â–¹** `{author if author else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ AÊ€á´›Éªsá´› â–¹** `{artist if artist else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ Aá´œá´…Éªá´ â–¹** `{audio if audio else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ Sá´œÊ™á´›Éªá´›ÊŸá´‡ â–¹** `{subtitle if subtitle else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
+**â—ˆ VÉªá´‡á´ â–¹** `{video if video else 'Ná´á´› êœ°á´á´œÉ´á´…'}`  
         """
         
         buttons = InlineKeyboardMarkup([
@@ -1421,7 +1422,7 @@ async def callback_handler(client, query):
                 InlineKeyboardButton("How to Set Metadata", callback_data="metainfo")
             ],
             [
-                InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")
+                InlineKeyboardButton("â€¢ Ê™á´€á´„á´‹", callback_data="help")
             ]
         ])
         
@@ -1433,12 +1434,12 @@ async def callback_handler(client, query):
     
     elif data == "metadata_on":
         await db.set_metadata(user_id, True)
-        await query.answer("Metadata turned ON ✅")
+        await query.answer("Metadata turned ON âœ…")
         await callback_handler(client, query)  # Refresh menu
     
     elif data == "metadata_off":
         await db.set_metadata(user_id, False)
-        await query.answer("Metadata turned OFF ❌")
+        await query.answer("Metadata turned OFF âŒ")
         await callback_handler(client, query)  # Refresh menu
     
     elif data == "metainfo":
@@ -1447,8 +1448,8 @@ async def callback_handler(client, query):
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup([
                 [
-                    InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="meta"),
-                    InlineKeyboardButton("• ᴄʟᴏsᴇ", callback_data="close")
+                    InlineKeyboardButton("â€¢ Ê™á´€á´„á´‹", callback_data="meta"),
+                    InlineKeyboardButton("â€¢ á´„ÊŸá´sá´‡", callback_data="close")
                 ]
             ])
         )
@@ -1469,10 +1470,10 @@ async def stats_handler(client, message):
     uptime = time.strftime("%Hh%Mm%Ss", time.gmtime(time.time() - Config.BOT_UPTIME))
     
     await message.reply_text(
-        f"**📊 Bot Statistics**\n\n"
-        f"**• Total Users:** `{total_users}`\n"
-        f"**• Uptime:** `{uptime}`\n"
-        f"**• Admin IDs:** `{', '.join(map(str, Config.ADMIN))}`"
+        f"**ðŸ""Š Bot Statistics**\n\n"
+        f"**â€¢ Total Users:** `{total_users}`\n"
+        f"**â€¢ Uptime:** `{uptime}`\n"
+        f"**â€¢ Admin IDs:** `{', '.join(map(str, Config.ADMIN))}`"
     )
 
 @app.on_message(filters.command("broadcast") & filters.user(Config.ADMIN) & filters.reply)
@@ -1486,7 +1487,7 @@ async def broadcast_handler(client, message):
     sent = 0
     failed = 0
     
-    status_msg = await message.reply_text("📢 Starting broadcast...")
+    status_msg = await message.reply_text("ðŸ""¢ Starting broadcast...")
     
     all_users = await db.get_all_users()
     async for user in all_users:
@@ -1499,23 +1500,23 @@ async def broadcast_handler(client, message):
         
         if (sent + failed) % 10 == 0:
             await status_msg.edit_text(
-                f"📢 Broadcasting...\n\n"
+                f"ðŸ""¢ Broadcasting...\n\n"
                 f"**Sent:** {sent}\n"
                 f"**Failed:** {failed}\n"
                 f"**Total:** {total_users}"
             )
     
     await status_msg.edit_text(
-        f"✅ **Broadcast Complete!**\n\n"
+        f"âœ… **Broadcast Complete!**\n\n"
         f"**Total Users:** {total_users}\n"
-        f"**✅ Sent:** {sent}\n"
-        f"**❌ Failed:** {failed}"
+        f"**âœ… Sent:** {sent}\n"
+        f"**âŒ Failed:** {failed}"
     )
 
 # Restart command (admin only)
 @app.on_message(filters.command("restart") & filters.user(Config.ADMIN))
 async def restart_handler(client, message):
-    await message.reply_text("**🔄 Restarting bot...**")
+    await message.reply_text("**ðŸ"„ Restarting bot...**")
     os.execl(sys.executable, sys.executable, *sys.argv)
 
 # ==================== MAIN ====================
@@ -1528,15 +1529,15 @@ if __name__ == "__main__":
     
     # Check for ffmpeg
     if not shutil.which("ffmpeg"):
-        print("⚠️ WARNING: ffmpeg not found! Video conversion features will not work.")
+        print("âš ï¸ WARNING: ffmpeg not found! Video conversion features will not work.")
         print("Install ffmpeg: sudo apt-get install ffmpeg")
     
-    print("🚀 Starting Auto Rename Bot with Pre-Set Media Format...")
-    print("🤖 Bot is running. Press Ctrl+C to stop.")
+    print("ðŸš€ Starting Auto Rename Bot with Pre-Set Media Format...")
+    print("ðŸ¤– Bot is running. Press Ctrl+C to stop.")
     
     try:
         app.run()
     except KeyboardInterrupt:
-        print("\n👋 Bot stopped by user")
+        print("\nðŸ'‹ Bot stopped by user")
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"âŒ Error: {e}")
