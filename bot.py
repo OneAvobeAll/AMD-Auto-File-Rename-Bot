@@ -1,7 +1,8 @@
+
 #!/usr/bin/env python3
 """
-Auto Rename Bot - Final Corrected Version
-Fixes divdivmod error and preserves original quality
+Auto Rename Bot - Complete Version
+Users set media format first, then all files are processed accordingly
 """
 
 import os
@@ -17,8 +18,9 @@ import shutil
 import subprocess
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
+from pathlib import Path
 from dotenv import load_dotenv
-from PIL import Image
+from PIL import Image, ImageOps
 import motor.motor_asyncio
 from pyrogram import Client, filters, __version__
 from pyrogram.types import (
@@ -46,6 +48,12 @@ class Config:
     WEBHOOK = os.getenv("WEBHOOK", "False").lower() == "true"
     PORT = int(os.getenv("PORT", "8080"))
     BOT_UPTIME = time.time()
+    
+    # Media conversion settings
+    SUPPORTED_VIDEO_FORMATS = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm']
+    SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.bmp', '.webp']
+    SUPPORTED_AUDIO_FORMATS = ['.mp3', '.m4a', '.wav', '.flac', '.ogg']
+    SUPPORTED_DOCUMENT_FORMATS = ['.txt', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx']
 
 class Txt:
     START_TXT = """<b>ʜᴇʏ! {}  
@@ -54,35 +62,55 @@ class Txt:
     
     FILE_NAME_TXT = """<b>» <u>sᴇᴛᴜᴘ ᴀᴜᴛᴏ ʀᴇɴᴀᴍᴇ ғᴏʀᴍᴀᴛ</u></b>
 
-<b>ᴠᴀʀɪᴀʙʟᴇꜱ :</b>
-➲ ᴇᴘɪꜱᴏᴅᴇ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ ᴇᴘɪꜱᴏᴅᴇ ɴᴜᴍʙᴇʀ  
-➲ ꜱᴇᴀꜱᴏɴ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ ꜱᴇᴀꜱᴏɴ ɴᴜᴍʙᴇʀ  
+<b>ᴠᴀʀɪᴀʙʟᴇs :</b>
+➲ ᴇᴘɪsᴏᴅᴇ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ ᴇᴘɪsᴏᴅᴇ ɴᴜᴍʙᴇʀ  
+➲ sᴇᴀsᴏɴ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ sᴇᴀsᴏɴ ɴᴜᴍʙᴇʀ  
 ➲ ǫᴜᴀʟɪᴛʏ - ᴛᴏ ʀᴇᴘʟᴀᴄᴇ ǫᴜᴀʟɪᴛʏ  
 
 <b>‣ ꜰᴏʀ ᴇx:- </b> `/autorename Oᴠᴇʀғʟᴏᴡ [Sseason Eepisode] - [Dual] quality`
 
-<b>‣ /Autorename: ʀᴇɴᴀᴍᴇ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰɪʟᴇꜱ ʙʏ ɪɴᴄʟᴜᴅɪɴɢ 'ᴇᴘɪꜱᴏᴅᴇ' ᴀɴᴅ 'ǫᴜᴀʟɪᴛʏ' ᴠᴀʀɪᴀʙʟᴇꜱ ɪɴ ʏᴏᴜʀ ᴛᴇxᴛ, ᴛᴏ ᴇxᴛʀᴀᴄᴛ ᴇᴘɪꜱᴏᴅᴇ ᴀɴᴅ ǫᴜᴀʟɪᴛʏ ᴘʀᴇꜱᴇɴᴛ ɪɴ ᴛʜᴇ ᴏʀɪɢɪɴᴀʟ ꜰɪʟᴇɴᴀᴍᴇ.</b>"""
+<b>‣ /Autorename: ʀᴇɴᴀᴍᴇ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰɪʟᴇs ʙʏ ɪɴᴄʟᴜᴅɪɴɢ 'ᴇᴘɪsᴏᴅᴇ' ᴀɴᴅ 'ǫᴜᴀʟɪᴛʏ' ᴠᴀʀɪᴀʙʟᴇs ɪɴ ʏᴏᴜʀ ᴛᴇxᴛ, ᴛᴏ ᴇxᴛʀᴀᴄᴛ ᴇᴘɪsᴏᴅᴇ ᴀɴᴅ ǫᴜᴀʟɪᴛʏ ᴘʀᴇsᴇɴᴛ ɪɴ ᴛʜᴇ ᴏʀɪɢɪɴᴀʟ ꜰɪʟᴇɴᴀᴍᴇ.</b>"""
     
-    CAPTION_TXT = """<b><u>» ᴛᴏ ꜱᴇᴛ ᴄᴜꜱᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀɴᴅ ᴍᴇᴅɪᴀ ᴛʜʏᴘᴇ</u></b>
+    CAPTION_TXT = """<b><u>» ᴛᴏ ꜱᴇᴛ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀɴᴅ ᴍᴇᴅɪᴀ ᴛʏᴘᴇ</u></b>
     
-<b>ᴠᴀʀɪᴀʙʟᴇꜱ :</b>         
-ꜱɪᴢᴇ: {filesize}
+<b>ᴠᴀʀɪᴀʙʟᴇs :</b>         
+sɪᴢᴇ: {filesize}
 ᴅᴜʀᴀᴛɪᴏɴ: {duration}
 ꜰɪʟᴇɴᴀᴍᴇ: {filename}
 
-➲ /set_caption: ᴛᴏ ꜱᴇᴛ ᴀ ᴄᴜꜱᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
-➲ /see_caption: ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
-➲ /del_caption: ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
+➲ /set_caption: ᴛᴏ ꜱᴇᴛ ᴀ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
+➲ /see_caption: ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
+➲ /del_caption: ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ.
 
 » ꜰᴏʀ ᴇx:- /set_caption ꜰɪʟᴇ ɴᴀᴍᴇ: {filename}"""
 
-    THUMBNAIL_TXT = """<b><u>» ᴛᴏ ꜱᴇᴛ ᴄᴜꜱᴛᴏᴍ ᴛʜᴜᴍʙɴᴀɪʟ</u></b>
+    THUMBNAIL_TXT = """<b><u>» ᴛᴏ ꜱᴇᴛ ᴄᴜsᴛᴏᴍ ᴛʜᴜᴍʙɴᴀɪʟ</u></b>
     
-➲ /start: ꜱᴇɴᴅ ᴀɴʏ ᴘʜᴏᴛᴏ ᴛᴏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ꜱᴇᴛ ɪᴛ ᴀꜱ ᴀ ᴛʜᴜᴍʙɴᴀɪʟ..
-➲ /del_thumb: ᴜꜱᴇ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴏʟᴅ ᴛʜᴜᴍʙɴᴀɪʟ.
-➲ /view_thumb: ᴜꜱᴇ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜʀʀᴇɴᴛ ᴛʜᴜᴍʙɴᴀɪʟ.
+➲ /start: ꜱᴇɴᴅ ᴀɴʏ ᴘʜᴏᴛᴏ ᴛᴏ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ꜱᴇᴛ ɪᴛ ᴀs ᴀ ᴛʜᴜᴍʙɴᴀɪʟ..
+➲ /del_thumb: ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ ᴅᴇʟᴇᴛᴇ ʏᴏᴜʀ ᴏʟᴅ ᴛʜᴜᴍʙɴᴀɪʟ.
+➲ /view_thumb: ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴛᴏ ᴠɪᴇᴡ ʏᴏᴜʀ ᴄᴜʀʀᴇɴᴛ ᴛʜᴜᴍʙɴᴀɪʟ.
 
-ɴᴏᴛᴇ: ɪꜰ ɴᴏ ᴛʜᴜᴍʙɴᴀɪʟ ꜱᴀᴠᴇᴅ ɪɴ ʙᴏᴛ ᴛʜᴇɴ, ɪᴛ ᴡɪʟʟ ᴜꜱᴇ ᴛʜᴜᴍʙɴᴀɪʟ ᴏꜰ ᴛʜᴇ ᴏʀɪɢɪɴɪᴀʟ ꜰɪʟᴇ ᴛᴏ ꜱᴇᴛ ɪɴ ʀᴇɴᴀᴍᴇᴅ ꜰɪʟᴇ"""
+ɴᴏᴛᴇ: ɪꜰ ɴᴏ ᴛʜᴜᴍʙɴᴀɪʟ ꜱᴀᴠᴇᴅ ɪɴ ʙᴏᴛ ᴛʜᴇɴ, ɪᴛ ᴡɪʟʟ ᴜsᴇ ᴛʜᴜᴍʙɴᴀɪʟ ᴏꜰ ᴛʜᴇ ᴏʀɪɢɪɴɪᴀʟ ꜰɪʟᴇ ᴛᴏ ꜱᴇᴛ ɪɴ ʀᴇɴᴀᴍᴇᴅ ꜰɪʟᴇ"""
+
+    MEDIA_FORMAT_TXT = """<b><u>» ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ</u></b>
+
+<b>ɪᴍᴘᴏʀᴛᴀɴᴛ:</b> ʏᴏᴜ ᴍᴜꜱᴛ ꜱᴇᴛ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ʙᴇꜰᴏʀᴇ ꜱᴇɴᴅɪɴɢ ꜰɪʟᴇꜱ!
+
+<b>📁 File Format:</b>
+• ꜰɪʟᴇs ᴡɪʟʟ ʙᴇ sᴇɴᴛ ᴀs ᴅᴏᴄᴜᴍᴇɴᴛs
+• ᴘʀᴇsᴇʀᴠᴇs ᴏʀɪɢɪɴᴀʟ ꜰɪʟᴇ ᴛʏᴘᴇ
+• ꜰᴀsᴛᴇʀ ᴘʀᴏᴄᴇssɪɴɢ
+
+<b>🎬 Video Format:</b>
+• ᴀʟʟ ꜰɪʟᴇs ᴡɪʟʟ ʙᴇ ᴄᴏɴᴠᴇʀᴛᴇᴅ ᴛᴏ ᴍᴘ4 ᴠɪᴅᴇᴏ
+• ᴠɪᴅᴇᴏ ꜰʀᴀᴍᴇ ᴍᴀᴛᴄʜᴇs ᴛʜᴜᴍʙɴᴀɪʟ ꜱɪᴢᴇ & ʀᴀᴛɪᴏ
+• ᴘᴇʀꜰᴇᴄᴛ ꜰᴏʀ ᴠɪᴅᴇᴏ ᴘʟᴀᴛꜰᴏʀᴍs
+
+<b>ʜᴏᴡ ᴛᴏ ᴜsᴇ:</b>
+1. /setmedia - ꜱᴇʟᴇᴄᴛ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ
+2. /autorename - ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ
+3. ꜱᴇɴᴅ ᴘʜᴏᴛᴏ - ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ (ᴏᴘᴛɪᴏɴᴀʟ)
+4. ꜱᴇɴᴅ ᴀɴʏ ꜰɪʟᴇ - ᴀᴜᴛᴏᴍᴀᴛɪᴄ ᴘʀᴏᴄᴇssɪɴɢ"""
 
     PROGRESS_BAR = """\n
 <b>» Size</b> : {1} | {2}
@@ -90,15 +118,22 @@ class Txt:
 <b>» Speed</b> : {3}/s
 <b>» ETA</b> : {4} """
 
-    HELP_TXT = """<b>ʜᴇʀᴇ ɪꜱ ʜᴇʟᴘ ᴍᴇɴᴜ ɪᴍᴘᴏʀᴛᴀɴᴛ ᴄᴏᴍᴍᴀɴᴅꜱ:
+    HELP_TXT = """<b>ʜᴇʀᴇ ɪs ʜᴇʟᴘ ᴍᴇɴᴜ ɪᴍᴘᴏʀᴛᴀɴᴔ ᴄᴏᴍᴍᴀɴᴅs:
 
 ᴀᴡᴇsᴏᴍᴇ ғᴇᴀᴛᴜʀᴇs🫧
 
-ʀᴇɴᴀᴍᴇ ʙᴏᴛ ɪꜱ ᴀ ʜᴀɴᴅʏ ᴛᴏᴏʟ ᴛʜᴀᴛ ʜᴇʟᴘꜱ ʏᴏᴜ ʀᴇɴᴀᴍᴇ ᴀɴᴅ ᴍᴀɴᴀɢᴇ ʏᴏᴜʀ ꜰɪʟᴇꜱ ᴇꜰꜰᴏʀᴛʟᴇꜱꜱʟʏ.
+ʀᴇɴᴀᴍᴇ ʙᴏᴛ ɪs ᴀ ʜᴀɴᴅʏ ᴛᴏᴏʟ ᴛʜᴀᴛ ʜᴇʟᴘs ʏᴏᴜ ʀᴇɴᴀᴍᴇ ᴀɴᴅ ᴍᴀɴᴀɢᴇ ʏᴏᴜʀ ꜰɪʟᴇs ᴇꜰꜰᴏʀᴛʟᴇssʟʏ.
 
-➲ /autorename: ᴀᴜᴛᴏ ʀᴇɴᴀᴍᴇ ʏᴏᴜʀ ꜰɪʟᴇꜱ.
-➲ /metadata: ᴄᴏᴍᴍᴀɴᴅꜱ ᴛᴏ ᴛᴜʀɴ ᴏɴ/ᴏғғ ᴍᴇᴛᴀᴅᴀᴛᴀ.
-➲ /help: ɢᴇᴛ ǫᴜɪᴄᴋ ᴀꜱꜱɪꜱᴛᴀɴᴄᴇ.</b>"""
+<b>ꜱᴇᴛᴜᴘ ꜱᴛᴇᴘs:</b>
+1. /setmedia - ꜱᴇᴛ ʏᴏᴜʀ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ
+2. /autorename - ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ
+3. ꜱᴇɴᴅ ᴘʜᴏᴛᴏ - ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ
+4. ꜱᴇɴᴅ ꜰɪʟᴇs - ᴀᴜᴛᴏ ᴘʀᴏᴄᴇssɪɴɢ
+
+<b>ᴏᴛʜᴇʀ ᴄᴏᴍᴍᴀɴᴅs:</b>
+➲ /set_caption: ꜱᴇᴛ ᴄᴜsᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ
+➲ /metadata: ᴛᴜʀɴ ᴏɴ/ᴏꜰꜰ ᴍᴇᴛᴀᴅᴀᴛᴀ
+➲ /help: ɢᴇᴛ ᴍᴏʀᴇ ʜᴇʟᴘ</b>"""
     
     META_TXT = """<b><u>» How to Set Metadata</u></b>
 
@@ -114,7 +149,7 @@ class Txt:
 <code>/settitle Encoded by @Codeflix_Bots</code>
 <code>/setauthor @Codeflix_Bots</code>
 
-<b>Note:</b> Metadata addition does NOT re-encode or reduce quality. It only adds metadata tags."""
+<b>Note:</b> Some metadata fields may not be supported by all video formats."""
 
 # ==================== DATABASE ====================
 class Database:
@@ -137,7 +172,8 @@ class Database:
             "subtitle": "By @Codeflix_Bots",
             "video": "Encoded By @Codeflix_Bots",
             "format_template": None,
-            "media_type": "document",
+            "media_format": None,  # User must set this first: "file" or "video"
+            "media_format_set": False,  # Track if user has set media format
             "ban_status": {
                 "is_banned": False,
                 "ban_duration": 0,
@@ -185,12 +221,21 @@ class Database:
         user = await self.col.find_one({"_id": int(user_id)})
         return user.get("format_template", None) if user else None
     
-    async def set_media_preference(self, user_id, media_type):
-        await self.col.update_one({"_id": int(user_id)}, {"$set": {"media_type": media_type}})
+    async def set_media_format(self, user_id, media_format):
+        await self.col.update_one({"_id": int(user_id)}, {
+            "$set": {
+                "media_format": media_format,
+                "media_format_set": True
+            }
+        })
     
-    async def get_media_preference(self, user_id):
+    async def get_media_format(self, user_id):
         user = await self.col.find_one({"_id": int(user_id)})
-        return user.get("media_type", "document") if user else "document"
+        return user.get("media_format", None) if user else None
+    
+    async def is_media_format_set(self, user_id):
+        user = await self.col.find_one({"_id": int(user_id)})
+        return user.get("media_format_set", False) if user else False
     
     async def get_metadata(self, user_id):
         user = await self.col.find_one({"_id": int(user_id)})
@@ -258,15 +303,14 @@ def humanbytes(size):
     return f"{size:.2f} PB"
 
 def TimeFormatter(milliseconds: int) -> str:
-    """Convert milliseconds to readable time format - FIXED VERSION"""
     seconds, milliseconds = divmod(int(milliseconds), 1000)
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
-    days, hours = divmod(hours, 24)  # FIXED: Changed 'divdivmod' to 'divmod'
+    days, hours = divmod(hours, 24)
     tmp = ((str(days) + "ᴅ, ") if days else "") + \
           ((str(hours) + "ʜ, ") if hours else "") + \
           ((str(minutes) + "ᴍ, ") if minutes else "") + \
-          ((str(seconds) + "ꜱ, ") if seconds else "")
+          ((str(seconds) + "s, ") if seconds else "")
     return tmp[:-2] or "0 s"
 
 async def progress_for_pyrogram(current, total, ud_type, message, start):
@@ -320,6 +364,264 @@ async def check_anti_nsfw(filename, message):
             await message.reply_text("❌ NSFW content detected. File not processed.")
             return True
     return False
+
+# ==================== MEDIA CONVERSION FUNCTIONS ====================
+def get_media_info(file_path):
+    """Get media information using ffprobe"""
+    try:
+        cmd = [
+            'ffprobe', '-v', 'quiet', '-print_format', 'json',
+            '-show_format', '-show_streams', file_path
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        return json.loads(result.stdout)
+    except:
+        return None
+
+def get_video_resolution(file_path):
+    """Get video resolution"""
+    info = get_media_info(file_path)
+    if info and 'streams' in info:
+        for stream in info['streams']:
+            if stream.get('codec_type') == 'video':
+                width = stream.get('width', 0)
+                height = stream.get('height', 0)
+                return width, height
+    return 0, 0
+
+def get_thumbnail_dimensions(thumb_path):
+    """Get thumbnail dimensions"""
+    if not thumb_path or not os.path.exists(thumb_path):
+        return 1280, 720  # Default HD dimensions
+    
+    try:
+        with Image.open(thumb_path) as img:
+            width, height = img.size
+            # Ensure even dimensions for video encoding
+            width = width - (width % 2)
+            height = height - (height % 2)
+            return width, height
+    except:
+        return 1280, 720
+
+def get_aspect_ratio(width, height):
+    """Calculate aspect ratio"""
+    if width == 0 or height == 0:
+        return "16:9"
+    
+    def gcd(a, b):
+        while b:
+            a, b = b, a % b
+        return a
+    
+    g = gcd(width, height)
+    return f"{width//g}:{height//g}"
+
+def convert_to_video_format(input_path, output_path, thumb_path=None):
+    """Convert any file to MP4 video format with thumbnail dimensions"""
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+    
+    # Get thumbnail dimensions
+    if thumb_path and os.path.exists(thumb_path):
+        thumb_width, thumb_height = get_thumbnail_dimensions(thumb_path)
+        # Ensure minimum dimensions
+        if thumb_width < 640:
+            thumb_width = 640
+        if thumb_height < 360:
+            thumb_height = 360
+    else:
+        thumb_width, thumb_height = 1280, 720
+    
+    # Get file extension
+    input_ext = os.path.splitext(input_path)[1].lower()
+    
+    # Build FFmpeg command based on input type
+    cmd = ['ffmpeg']
+    
+    # Check if input is video
+    if input_ext in Config.SUPPORTED_VIDEO_FORMATS:
+        # Video to video conversion - resize to thumbnail dimensions
+        cmd.extend([
+            '-i', input_path,
+            '-vf', f'scale={thumb_width}:{thumb_height}:force_original_aspect_ratio=decrease,pad={thumb_width}:{thumb_height}:(ow-iw)/2:(oh-ih)/2,setsar=1',
+            '-c:v', 'libx264',
+            '-preset', 'medium',
+            '-crf', '23',
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            '-movflags', '+faststart',
+            '-pix_fmt', 'yuv420p',
+            '-y', output_path
+        ])
+    
+    # Check if input is image
+    elif input_ext in Config.SUPPORTED_IMAGE_FORMATS:
+        # Image to video conversion
+        cmd.extend([
+            '-loop', '1',
+            '-i', input_path,
+            '-vf', f'scale={thumb_width}:{thumb_height},setsar=1',
+            '-c:v', 'libx264',
+            '-t', '10',  # 10 second video
+            '-pix_fmt', 'yuv420p',
+            '-y', output_path
+        ])
+    
+    # Check if input is audio
+    elif input_ext in Config.SUPPORTED_AUDIO_FORMATS:
+        # Audio to video conversion
+        if thumb_path and os.path.exists(thumb_path):
+            cmd.extend([
+                '-loop', '1',
+                '-i', thumb_path,
+                '-i', input_path,
+                '-vf', f'scale={thumb_width}:{thumb_height},setsar=1',
+                '-c:v', 'libx264',
+                '-c:a', 'aac',
+                '-b:a', '192k',
+                '-shortest',
+                '-pix_fmt', 'yuv420p',
+                '-y', output_path
+            ])
+        else:
+            cmd.extend([
+                '-f', 'lavfi',
+                '-i', f'color=c=black:s={thumb_width}x{thumb_height}:r=25',
+                '-i', input_path,
+                '-c:v', 'libx264',
+                '-c:a', 'aac',
+                '-b:a', '192k',
+                '-shortest',
+                '-pix_fmt', 'yuv420p',
+                '-y', output_path
+            ])
+    
+    # For other files (documents, etc.)
+    else:
+        if thumb_path and os.path.exists(thumb_path):
+            cmd.extend([
+                '-loop', '1',
+                '-i', thumb_path,
+                '-vf', f'scale={thumb_width}:{thumb_height},setsar=1',
+                '-c:v', 'libx264',
+                '-t', '5',  # 5 second video
+                '-pix_fmt', 'yuv420p',
+                '-y', output_path
+            ])
+        else:
+            cmd.extend([
+                '-f', 'lavfi',
+                '-i', f'color=c=white:s={thumb_width}x{thumb_height}:r=25',
+                '-c:v', 'libx264',
+                '-t', '5',
+                '-pix_fmt', 'yuv420p',
+                '-y', output_path
+            ])
+    
+    # Run conversion
+    try:
+        process = subprocess.run(cmd, capture_output=True, text=True)
+        if process.returncode != 0:
+            error_msg = process.stderr if process.stderr else "Unknown error"
+            raise RuntimeError(f"FFmpeg error: {error_msg}")
+        
+        # Verify output file was created
+        if not os.path.exists(output_path):
+            raise RuntimeError("Output file was not created")
+        
+        return output_path
+    except Exception as e:
+        print(f"Conversion error: {e}")
+        print(f"FFmpeg command: {' '.join(cmd)}")
+        raise
+
+async def convert_to_video_async(input_path, output_path, thumb_path):
+    """Async wrapper for video conversion"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None, convert_to_video_format, input_path, output_path, thumb_path
+    )
+
+async def add_metadata(input_path, output_path, user_id):
+    """Add metadata to media file using ffmpeg"""
+    if not os.path.exists(input_path):
+        raise FileNotFoundError(f"Input file not found: {input_path}")
+    
+    # Get metadata values from database
+    title = await db.get_title(user_id)
+    artist = await db.get_artist(user_id)
+    author = await db.get_author(user_id)
+    video_title = await db.get_video(user_id)
+    audio_title = await db.get_audio(user_id)
+    subtitle_title = await db.get_subtitle(user_id)
+    
+    # Determine file extension
+    file_ext = os.path.splitext(output_path)[1].lower()
+    
+    # Prepare metadata arguments
+    metadata_args = []
+    
+    # Add standard metadata fields
+    if title:
+        metadata_args.extend(['-metadata', f'title={title}'])
+    if artist:
+        metadata_args.extend(['-metadata', f'artist={artist}'])
+    if author:
+        metadata_args.extend(['-metadata', f'author={author}'])
+    
+    # Add stream-specific metadata
+    if video_title:
+        metadata_args.extend(['-metadata:s:v', f'title={video_title}'])
+    if audio_title:
+        metadata_args.extend(['-metadata:s:a', f'title={audio_title}'])
+    if subtitle_title:
+        metadata_args.extend(['-metadata:s:s', f'title={subtitle_title}'])
+    
+    # Build FFmpeg command
+    cmd = [
+        'ffmpeg',
+        '-i', input_path,
+        '-map_metadata', '0',
+        '-c', 'copy',
+    ]
+    
+    # Add format-specific flags
+    if file_ext in ['.mp4', '.m4v', '.mov']:
+        cmd.extend(['-movflags', 'use_metadata_tags'])
+    elif file_ext in ['.mkv', '.webm']:
+        cmd.extend(['-map_metadata', '0', '-c', 'copy'])
+    
+    # Add metadata arguments
+    cmd.extend(metadata_args)
+    
+    # Add output file
+    cmd.extend(['-y', output_path])
+    
+    # Execute FFmpeg command
+    try:
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        stdout, stderr = await process.communicate()
+        
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            print(f"Metadata warning: {error_msg}")
+            # Copy file without metadata as fallback
+            shutil.copy2(input_path, output_path)
+            return output_path
+        
+        return output_path
+        
+    except Exception as e:
+        print(f"Metadata processing error: {e}")
+        # Fallback: copy file without metadata
+        shutil.copy2(input_path, output_path)
+        return output_path
 
 # ==================== FILE PROCESSING FUNCTIONS ====================
 def extract_season_episode(filename):
@@ -379,144 +681,47 @@ async def process_thumbnail(thumb_path):
         with Image.open(thumb_path) as img:
             if img.mode != 'RGB':
                 img = img.convert('RGB')
-            img.thumbnail((320, 320))
-            img.save(thumb_path, "JPEG", quality=85)
+            # Resize to reasonable size for Telegram
+            img.thumbnail((320, 320), Image.Resampling.LANCZOS)
+            img.save(thumb_path, "JPEG", quality=90)
         return thumb_path
     except Exception as e:
         print(f"Thumbnail processing error: {e}")
         await cleanup_files(thumb_path)
         return None
 
-async def add_metadata_preserve_quality(input_path, output_path, user_id):
-    """
-    Add metadata WITHOUT re-encoding - preserves original quality
-    Uses stream copy for all codecs
-    """
-    if not os.path.exists(input_path):
-        raise FileNotFoundError(f"Input file not found: {input_path}")
+def generate_new_filename(format_template, original_name, file_size, duration):
+    """Generate new filename based on template"""
+    base_name = os.path.splitext(original_name)[0]
+    ext = os.path.splitext(original_name)[1] or '.mp4'
     
-    # Get metadata values
-    title = await db.get_title(user_id)
-    artist = await db.get_artist(user_id)
-    author = await db.get_author(user_id)
-    video_title = await db.get_video(user_id)
-    audio_title = await db.get_audio(user_id)
-    subtitle_title = await db.get_subtitle(user_id)
+    season, episode = extract_season_episode(base_name)
+    quality = extract_quality(base_name)
     
-    # Get file extension for format detection
-    file_ext = os.path.splitext(input_path)[1].lower()
+    # Replace variables in template
+    new_filename = format_template
+    replacements = {
+        '{filename}': base_name,
+        '{season}': season or '01',
+        '{episode}': episode or '01',
+        '{quality}': quality,
+        '{filesize}': humanbytes(file_size),
+        '{duration}': str(timedelta(seconds=duration)) if duration else '00:00:00',
+        'Season': season or '01',
+        'Episode': episode or '01',
+        'QUALITY': quality.upper() if quality != "Unknown" else "HD"
+    }
     
-    # Prepare FFmpeg command - CRITICAL: Use '-c copy' for NO re-encoding
-    cmd = [
-        'ffmpeg',
-        '-i', input_path,
-        '-map', '0',  # Map all streams
-        '-c', 'copy',  # CRITICAL: Copy all streams without re-encoding
-        '-map_metadata', '0',  # Copy existing metadata
-    ]
+    for key, value in replacements.items():
+        new_filename = new_filename.replace(key, value)
     
-    # Add metadata if provided (only add non-empty metadata)
-    if title and title.strip():
-        cmd.extend(['-metadata', f'title={title}'])
-    
-    if artist and artist.strip():
-        cmd.extend(['-metadata', f'artist={artist}'])
-    
-    if author and author.strip():
-        cmd.extend(['-metadata', f'author={author}'])
-    
-    if video_title and video_title.strip():
-        cmd.extend(['-metadata:s:v', f'title={video_title}'])
-    
-    if audio_title and audio_title.strip():
-        cmd.extend(['-metadata:s:a', f'title={audio_title}'])
-    
-    if subtitle_title and subtitle_title.strip():
-        cmd.extend(['-metadata:s:s', f'title={subtitle_title}'])
-    
-    # Add format-specific flags for better compatibility
-    if file_ext in ['.mp4', '.m4v', '.mov']:
-        cmd.extend(['-movflags', '+faststart'])  # Optimize for streaming
-        cmd.extend(['-movflags', 'use_metadata_tags'])
-    elif file_ext in ['.mkv']:
-        cmd.extend(['-c:v', 'copy', '-c:a', 'copy', '-c:s', 'copy'])
-    
-    # Add output file
-    cmd.extend(['-y', output_path])
-    
-    # Log command for debugging
-    print(f"FFmpeg command (NO RE-ENCODING): {' '.join(cmd)}")
-    
-    try:
-        # Execute FFmpeg
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        
-        stdout, stderr = await process.communicate()
-        
-        if process.returncode != 0:
-            error_msg = stderr.decode() if stderr else "Unknown error"
-            
-            # Check if it's a metadata-related error (non-fatal)
-            if "Invalid argument" in error_msg or "Unrecognized option" in error_msg:
-                print(f"Metadata warning: {error_msg[:200]}")
-                # Try simpler command without problematic metadata
-                simple_cmd = [
-                    'ffmpeg',
-                    '-i', input_path,
-                    '-map', '0',
-                    '-c', 'copy',
-                    '-map_metadata', '0',
-                    '-y', output_path
-                ]
-                process2 = await asyncio.create_subprocess_exec(
-                    *simple_cmd,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
-                )
-                await process2.communicate()
-                if process2.returncode == 0:
-                    print("File copied without custom metadata (fallback)")
-                    return output_path
-            
-            raise RuntimeError(f"FFmpeg error: {error_msg[:500]}")
-        
-        # Verify file was created
-        if os.path.exists(output_path):
-            # Compare file sizes (should be very similar)
-            input_size = os.path.getsize(input_path)
-            output_size = os.path.getsize(output_path)
-            
-            # Metadata adds minimal size, allow small difference
-            size_diff_percent = abs(output_size - input_size) / input_size * 100
-            
-            if size_diff_percent < 5:  # Less than 5% difference
-                print(f"✅ Quality preserved! Size difference: {size_diff_percent:.2f}%")
-                print(f"Input: {humanbytes(input_size)}, Output: {humanbytes(output_size)}")
-            else:
-                print(f"⚠️ Size difference >5%: {size_diff_percent:.2f}%")
-            
-            return output_path
-        else:
-            raise RuntimeError("Output file not created")
-            
-    except Exception as e:
-        print(f"Error in add_metadata_preserve_quality: {e}")
-        # Ultimate fallback: just copy the file
-        try:
-            shutil.copy2(input_path, output_path)
-            print("Fallback: File copied without any processing")
-            return output_path
-        except Exception as copy_error:
-            raise RuntimeError(f"Failed to process file: {copy_error}")
+    return new_filename, ext
 
 # ==================== BOT CLIENT ====================
 # Create necessary directories
 os.makedirs("downloads", exist_ok=True)
 os.makedirs("temp", exist_ok=True)
+os.makedirs("converted", exist_ok=True)
 
 # Initialize bot
 app = Client(
@@ -524,8 +729,8 @@ app = Client(
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
     bot_token=Config.BOT_TOKEN,
-    workers=100,
-    sleep_threshold=10,
+    workers=200,
+    sleep_threshold=15,
 )
 
 # ==================== HANDLERS ====================
@@ -535,17 +740,23 @@ async def start_handler(client, message):
     user = message.from_user
     await db.add_user(user.id)
     
+    # Check if media format is set
+    media_format_set = await db.is_media_format_set(user.id)
+    
+    # Send welcome message with appropriate buttons
     buttons = InlineKeyboardMarkup([
         [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
         [
             InlineKeyboardButton('• ᴜᴘᴅᴀᴛᴇs', url='https://t.me/Codeflix_Bots'),
             InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ •', url='https://t.me/CodeflixSupport')
-        ],
-        [
-            InlineKeyboardButton('• ᴀʙᴏᴜᴛ', callback_data='about'),
-            InlineKeyboardButton('sᴏᴜʀᴄᴇ •', callback_data='source')
         ]
     ])
+    
+    if not media_format_set:
+        # Add media format button if not set
+        buttons.inline_keyboard.insert(0, [
+            InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')
+        ])
     
     if Config.START_PIC:
         await message.reply_photo(
@@ -559,9 +770,35 @@ async def start_handler(client, message):
             reply_markup=buttons
         )
 
+# Set media format command - MUST BE SET FIRST
+@app.on_message(filters.command("setmedia") & filters.private)
+async def setmedia_handler(client, message):
+    buttons = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("📁 File Format", callback_data="media_file"),
+            InlineKeyboardButton("🎬 Video Format", callback_data="media_video")
+        ],
+        [InlineKeyboardButton("🔙 Back", callback_data="help")]
+    ])
+    
+    current_format = await db.get_media_format(message.from_user.id)
+    format_status = f"`{current_format.capitalize()}`" if current_format else "❌ **Not Set!**"
+    
+    await message.reply_text(
+        f"**⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ**\n\n"
+        f"**Current Format:** {format_status}\n\n"
+        "**📁 File Format:** Files will be sent as documents\n"
+        "**🎬 Video Format:** All files converted to MP4 video\n\n"
+        "⚠️ **You must set media format before sending files!**",
+        reply_markup=buttons
+    )
+
 # Help command
 @app.on_message(filters.command("help") & filters.private)
 async def help_handler(client, message):
+    user_id = message.from_user.id
+    media_format_set = await db.is_media_format_set(user_id)
+    
     buttons = InlineKeyboardMarkup([
         [InlineKeyboardButton("• ᴀᴜᴛᴏ ʀᴇɴᴀᴍᴇ ғᴏʀᴍᴀᴛ •", callback_data='file_names')],
         [
@@ -570,10 +807,16 @@ async def help_handler(client, message):
         ],
         [
             InlineKeyboardButton('• ᴍᴇᴛᴀᴅᴀᴛᴀ', callback_data='meta'),
-            InlineKeyboardButton('ᴅᴏɴᴀᴛᴇ •', callback_data='donate')
+            InlineKeyboardButton('ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ •', callback_data='media_format')
         ],
         [InlineKeyboardButton('• ʜᴏᴍᴇ', callback_data='home')]
     ])
+    
+    # Add warning if media format not set
+    if not media_format_set:
+        buttons.inline_keyboard.insert(0, [
+            InlineKeyboardButton("⚠️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ", callback_data='set_media_first')
+        ])
     
     await message.reply_text(
         Txt.HELP_TXT,
@@ -584,6 +827,23 @@ async def help_handler(client, message):
 # Autorename command
 @app.on_message(filters.command("autorename") & filters.private)
 async def autorename_handler(client, message):
+    user_id = message.from_user.id
+    
+    # Check if media format is set
+    if not await db.is_media_format_set(user_id):
+        buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')],
+            [InlineKeyboardButton("🔙 Back", callback_data='help')]
+        ])
+        
+        await message.reply_text(
+            "❌ **Please set media format first!**\n\n"
+            "You must set your media format before using the rename feature.\n"
+            "Use /setmedia or click the button below.",
+            reply_markup=buttons
+        )
+        return
+    
     if len(message.command) < 2:
         await message.reply_text(
             "**Please provide a rename format!**\n\n"
@@ -599,12 +859,12 @@ async def autorename_handler(client, message):
         return
     
     format_template = message.text.split(" ", 1)[1]
-    await db.set_format_template(message.from_user.id, format_template)
+    await db.set_format_template(user_id, format_template)
     
     await message.reply_text(
         f"**✅ Rename format set successfully!**\n\n"
         f"**Your format:** `{format_template}`\n\n"
-        "Now send me any file to rename it automatically."
+        "Now you can send me any file to rename it automatically."
     )
 
 # Set caption command
@@ -667,7 +927,7 @@ async def metadata_handler(client, message):
     metadata_status = await db.get_metadata(message.from_user.id)
     status_text = "ON ✅" if metadata_status else "OFF ❌"
     
-    # Get current metadata values
+    # Get current metadata values for display
     title = await db.get_title(message.from_user.id)
     author = await db.get_author(message.from_user.id)
     artist = await db.get_artist(message.from_user.id)
@@ -676,16 +936,14 @@ async def metadata_handler(client, message):
     subtitle = await db.get_subtitle(message.from_user.id)
     
     text = f"""
-**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪꜱ ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
+**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪs ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
 
 **◈ Tɪᴛʟᴇ ▹** `{title if title else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
 **◈ Aᴜᴛʜᴏʀ ▹** `{author if author else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aʀᴛɪꜱᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
+**◈ Aʀᴛɪsᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
 **◈ Aᴜᴅɪᴏ ▹** `{audio if audio else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
 **◈ Sᴜʙᴛɪᴛʟᴇ ▹** `{subtitle if subtitle else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
 **◈ Vɪᴅᴇᴏ ▹** `{video if video else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-
-**⚠️ Note:** Metadata addition does NOT re-encode or reduce quality.
     """
     
     buttons = InlineKeyboardMarkup([
@@ -707,21 +965,7 @@ async def metadata_handler(client, message):
         disable_web_page_preview=True
     )
 
-# Set media type command
-@app.on_message(filters.command("setmedia") & filters.private)
-async def setmedia_handler(client, message):
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("📜 Document", callback_data="media_document")],
-        [InlineKeyboardButton("🎬 Video", callback_data="media_video")],
-        [InlineKeyboardButton("🎵 Audio", callback_data="media_audio")]
-    ])
-    
-    await message.reply_text(
-        "**Select media type for renamed files:**",
-        reply_markup=buttons
-    )
-
-# Metadata setting commands
+# Set metadata fields commands
 @app.on_message(filters.private & filters.command('settitle'))
 async def settitle_handler(client, message):
     if len(message.command) == 1:
@@ -744,10 +988,10 @@ async def setauthor_handler(client, message):
 async def setartist_handler(client, message):
     if len(message.command) == 1:
         return await message.reply_text(
-            "**Gɪᴠᴇ Tʜᴇ Aʀᴛɪꜱᴛ\n\nExᴀᴍᴩʟᴇ:- /setartist @Codeflix_Bots**")
+            "**Gɪᴠᴇ Tʜᴇ Aʀᴛɪsᴛ\n\nExᴀᴍᴩʟᴇ:- /setartist @Codeflix_Bots**")
     artist = message.text.split(" ", 1)[1]
     await db.set_artist(message.from_user.id, artist=artist)
-    await message.reply_text("**✅ Aʀᴛɪꜱᴛ Sᴀᴠᴇᴅ**")
+    await message.reply_text("**✅ Aʀᴛɪsᴛ Sᴀᴠᴇᴅ**")
 
 @app.on_message(filters.private & filters.command('setaudio'))
 async def setaudio_handler(client, message):
@@ -776,16 +1020,34 @@ async def setvideo_handler(client, message):
     await db.set_video(message.from_user.id, video=video)
     await message.reply_text("**✅ Vɪᴅᴇᴏ Sᴀᴠᴇᴅ**")
 
-# Main file handler - UPDATED FOR QUALITY PRESERVATION
-@app.on_message(filters.private & (filters.document | filters.video | filters.audio))
-async def auto_rename_handler(client, message):
+# Main file handler - Auto processes based on user's media format setting
+@app.on_message(filters.private & (filters.document | filters.video | filters.audio | filters.photo))
+async def auto_file_handler(client, message):
     user_id = message.from_user.id
     
-    # Check if user has set rename format
+    # Check if media format is set
+    if not await db.is_media_format_set(user_id):
+        buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')],
+            [InlineKeyboardButton("🔙 Back", callback_data='help')]
+        ])
+        
+        await message.reply_text(
+            "❌ **Please set media format first!**\n\n"
+            "You must set your media format before sending files.\n"
+            "Use /setmedia or click the button below.\n\n"
+            "**Why?** This determines how your files will be processed:\n"
+            "• 📁 File Format: As documents\n"
+            "• 🎬 Video Format: As videos",
+            reply_markup=buttons
+        )
+        return
+    
+    # Check if rename format is set
     format_template = await db.get_format_template(user_id)
     if not format_template:
         await message.reply_text(
-            "❌ Please set a rename format first!\n"
+            "❌ **Please set a rename format first!**\n\n"
             "Use: `/autorename Your Format Here`\n\n"
             "**Example:** `/autorename {filename} [S{season}E{episode}]`"
         )
@@ -810,6 +1072,12 @@ async def auto_rename_handler(client, message):
         file_size = message.audio.file_size
         media_type = "audio"
         duration = message.audio.duration
+    elif message.photo:
+        file_id = message.photo.file_id
+        file_name = f"photo_{message.photo.file_unique_id}.jpg"
+        file_size = 0
+        media_type = "photo"
+        duration = 0
     else:
         return
     
@@ -817,35 +1085,17 @@ async def auto_rename_handler(client, message):
     if await check_anti_nsfw(file_name, message):
         return
     
-    # Extract filename components
-    base_name = os.path.splitext(file_name)[0]
-    ext = os.path.splitext(file_name)[1] or ('.mp4' if media_type == 'video' else '.mp3')
+    # Get user's media format
+    media_format = await db.get_media_format(user_id)
     
-    season, episode = extract_season_episode(base_name)
-    quality = extract_quality(base_name)
+    # Show processing message
+    format_icon = "🎬" if media_format == "video" else "📁"
+    msg = await message.reply_text(f"{format_icon} **Processing as {media_format.capitalize()}...**")
     
-    # Replace variables in template
-    new_filename = format_template
-    replacements = {
-        '{filename}': base_name,
-        '{season}': season or '01',
-        '{episode}': episode or '01',
-        '{quality}': quality,
-        '{filesize}': humanbytes(file_size),
-        '{duration}': str(timedelta(seconds=duration)) if duration else '00:00:00',
-        'Season': season or '01',
-        'Episode': episode or '01',
-        'QUALITY': quality.upper() if quality != "Unknown" else "HD"
-    }
-    
-    for key, value in replacements.items():
-        new_filename = new_filename.replace(key, value)
-    
-    new_filename = new_filename + ext
-    
-    # Download file
-    msg = await message.reply_text("📥 **Downloading file...**")
-    download_path = f"downloads/{user_id}_{int(time.time())}{ext}"
+    # Generate unique filename
+    timestamp = int(time.time())
+    original_ext = os.path.splitext(file_name)[1] or ('.mp4' if media_type == 'video' else '.jpg')
+    download_path = f"downloads/{user_id}_{timestamp}{original_ext}"
     
     try:
         # Download with progress
@@ -860,57 +1110,61 @@ async def auto_rename_handler(client, message):
             await msg.edit_text("❌ Download failed!")
             return
         
-        # Get original file size for comparison
-        original_size = os.path.getsize(file_path)
-        await msg.edit_text(f"⚙️ **Processing file... (Size: {humanbytes(original_size)})**")
-        
-        # Process metadata if enabled
-        output_path = file_path
-        metadata_enabled = await db.get_metadata(user_id)
-        
-        if metadata_enabled and media_type in ["video", "audio"]:
-            try:
-                metadata_path = f"temp/{user_id}_metadata{ext}"
-                await msg.edit_text("🔧 **Adding metadata (NO re-encoding)...**")
-                output_path = await add_metadata_preserve_quality(file_path, metadata_path, user_id)
-                
-                # Compare file sizes
-                if os.path.exists(output_path):
-                    new_size = os.path.getsize(output_path)
-                    size_diff = abs(new_size - original_size)
-                    size_diff_percent = (size_diff / original_size) * 100
-                    
-                    if size_diff_percent < 1:
-                        await msg.edit_text(f"✅ **Quality preserved! ({size_diff_percent:.2f}% size difference)**")
-                    else:
-                        await msg.edit_text(f"⚠️ **File processed ({size_diff_percent:.2f}% size difference)**")
-                    
-                    # Clean up original file
-                    await cleanup_files(file_path)
-                else:
-                    await msg.edit_text("⚠️ Output file not found, using original")
-                    output_path = file_path
-                    
-            except Exception as e:
-                print(f"Metadata error: {e}")
-                await msg.edit_text(f"⚠️ Metadata error: {str(e)[:100]}... (continuing without metadata)")
-                output_path = file_path  # Use original file
-        elif metadata_enabled:
-            await msg.edit_text("ℹ️ Metadata is only supported for video and audio files. Continuing without metadata...")
+        # Get actual file size
+        file_size = os.path.getsize(file_path)
         
         # Get thumbnail
         thumb_path = None
         user_thumb = await db.get_thumbnail(user_id)
         
         if user_thumb:
-            thumb_path = f"temp/{user_id}_thumb.jpg"
+            thumb_path = f"temp/{user_id}_thumb_{timestamp}.jpg"
             await client.download_media(user_thumb, file_name=thumb_path)
             thumb_path = await process_thumbnail(thumb_path)
         elif media_type == "video" and message.video.thumbs:
             thumb = message.video.thumbs[0]
-            thumb_path = f"temp/{user_id}_video_thumb.jpg"
+            thumb_path = f"temp/{user_id}_video_thumb_{timestamp}.jpg"
             await client.download_media(thumb.file_id, file_name=thumb_path)
             thumb_path = await process_thumbnail(thumb_path)
+        
+        # Generate new filename
+        new_filename, original_ext = generate_new_filename(
+            format_template, file_name, file_size, duration
+        )
+        
+        # Process based on media format
+        if media_format == "video":
+            # Video format - convert to MP4
+            new_filename = os.path.splitext(new_filename)[0] + ".mp4"
+            output_path = f"converted/{user_id}_{timestamp}.mp4"
+            
+            await msg.edit_text("🎬 **Converting to video format...**")
+            try:
+                output_path = await convert_to_video_async(file_path, output_path, thumb_path)
+            except Exception as e:
+                await msg.edit_text(f"❌ Video conversion failed: {str(e)[:100]}")
+                # Fallback to file format
+                output_path = file_path
+                media_format = "file"
+                new_filename = new_filename.replace('.mp4', original_ext)
+        else:
+            # File format - keep original
+            new_filename = new_filename + original_ext
+            output_path = file_path
+        
+        # Process metadata if enabled
+        metadata_enabled = await db.get_metadata(user_id)
+        final_output_path = output_path
+        
+        if metadata_enabled and os.path.exists(output_path):
+            try:
+                metadata_path = f"temp/{user_id}_metadata_{int(time.time())}{os.path.splitext(output_path)[1]}"
+                final_output_path = await add_metadata(output_path, metadata_path, user_id)
+                if output_path != file_path and output_path != final_output_path:
+                    await cleanup_files(output_path)
+            except Exception as e:
+                print(f"Metadata error: {e}")
+                # Continue without metadata
         
         # Get caption
         caption_template = await db.get_caption(user_id) or "{filename}"
@@ -918,51 +1172,36 @@ async def auto_rename_handler(client, message):
                                  .replace("{filesize}", humanbytes(file_size))\
                                  .replace("{duration}", str(timedelta(seconds=duration)) if duration else '00:00:00')
         
-        # Get media type preference
-        media_pref = await db.get_media_preference(user_id)
-        
-        # Get final output size
-        final_size = os.path.getsize(output_path)
-        await msg.edit_text(f"📤 **Uploading renamed file... (Final size: {humanbytes(final_size)})**")
-        
-        # Upload file based on media preference
+        # Upload file
+        await msg.edit_text("📤 **Uploading file...**")
         upload_start = time.time()
         
-        if media_pref == "document" or media_type == "document":
-            await client.send_document(
-                chat_id=message.chat.id,
-                document=output_path,
-                caption=caption,
-                thumb=thumb_path,
-                file_name=new_filename,
-                progress=progress_for_pyrogram,
-                progress_args=("📤 Uploading...", msg, upload_start)
-            )
-        elif media_pref == "video" and media_type == "video":
+        if media_format == "video":
+            # Get video duration
+            video_duration = 0
+            if os.path.exists(final_output_path):
+                try:
+                    info = get_media_info(final_output_path)
+                    if info and 'format' in info:
+                        video_duration = float(info['format'].get('duration', 0))
+                except:
+                    video_duration = duration
+            
+            # Send as video
             await client.send_video(
                 chat_id=message.chat.id,
-                video=output_path,
+                video=final_output_path,
                 caption=caption,
                 thumb=thumb_path,
-                duration=duration,
-                progress=progress_for_pyrogram,
-                progress_args=("📤 Uploading...", msg, upload_start)
-            )
-        elif media_pref == "audio" and media_type == "audio":
-            await client.send_audio(
-                chat_id=message.chat.id,
-                audio=output_path,
-                caption=caption,
-                thumb=thumb_path,
-                duration=duration,
+                duration=int(video_duration),
                 progress=progress_for_pyrogram,
                 progress_args=("📤 Uploading...", msg, upload_start)
             )
         else:
-            # Fallback to document
+            # Send as document
             await client.send_document(
                 chat_id=message.chat.id,
-                document=output_path,
+                document=final_output_path,
                 caption=caption,
                 thumb=thumb_path,
                 file_name=new_filename,
@@ -970,32 +1209,25 @@ async def auto_rename_handler(client, message):
                 progress_args=("📤 Uploading...", msg, upload_start)
             )
         
+        # Success message
         await msg.delete()
-        
-        # Send final message with size comparison
-        size_comparison = ""
-        if metadata_enabled and media_type in ["video", "audio"]:
-            size_diff = final_size - file_size
-            if abs(size_diff) > 1024:  # More than 1KB difference
-                size_comparison = f"\n**Size change:** {humanbytes(abs(size_diff))} ({'+' if size_diff > 0 else ''}{size_diff/file_size*100:.2f}%)"
-        
         await message.reply_text(
-            f"✅ **File renamed successfully!**\n"
+            f"✅ **File processed successfully as {media_format.capitalize()}!**\n"
             f"**New name:** `{new_filename}`\n"
-            f"**Original size:** {humanbytes(file_size)}\n"
-            f"**Final size:** {humanbytes(final_size)}"
-            f"{size_comparison}"
+            f"**Format:** {'🎬 Video' if media_format == 'video' else '📁 File'}"
         )
         
     except Exception as e:
-        await msg.edit_text(f"❌ **Error:** {str(e)}")
+        await msg.edit_text(f"❌ **Error:** {str(e)[:200]}")
         print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
     finally:
         # Cleanup
-        await cleanup_files(download_path, output_path if 'output_path' in locals() and output_path != file_path else None, 
-                          thumb_path if 'thumb_path' in locals() else None)
+        await cleanup_files(
+            download_path, 
+            output_path if 'output_path' in locals() and output_path != download_path else None,
+            final_output_path if 'final_output_path' in locals() and final_output_path != output_path else None,
+            thumb_path if 'thumb_path' in locals() else None
+        )
 
 # Callback query handler
 @app.on_callback_query()
@@ -1004,17 +1236,20 @@ async def callback_handler(client, query):
     user_id = query.from_user.id
     
     if data == "home":
+        media_format_set = await db.is_media_format_set(user_id)
+        
         buttons = InlineKeyboardMarkup([
             [InlineKeyboardButton("• ᴍʏ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs •", callback_data='help')],
             [
                 InlineKeyboardButton('• ᴜᴘᴅᴀᴛᴇs', url='https://t.me/Codeflix_Bots'),
                 InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ •', url='https://t.me/CodeflixSupport')
-            ],
-            [
-                InlineKeyboardButton('• ᴀʙᴏᴜᴛ', callback_data='about'),
-                InlineKeyboardButton('sᴏᴜʀᴄᴇ •', callback_data='source')
             ]
         ])
+        
+        if not media_format_set:
+            buttons.inline_keyboard.insert(0, [
+                InlineKeyboardButton("⚙️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ", callback_data='set_media_first')
+            ])
         
         await query.message.edit_text(
             Txt.START_TXT.format(query.from_user.mention),
@@ -1022,7 +1257,66 @@ async def callback_handler(client, query):
             disable_web_page_preview=True
         )
     
+    elif data == "set_media_first":
+        buttons = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("📁 File Format", callback_data="media_file"),
+                InlineKeyboardButton("🎬 Video Format", callback_data="media_video")
+            ],
+            [InlineKeyboardButton("🔙 Back", callback_data="home")]
+        ])
+        
+        await query.message.edit_text(
+            Txt.MEDIA_FORMAT_TXT,
+            reply_markup=buttons,
+            disable_web_page_preview=True
+        )
+    
+    elif data == "media_file":
+        await db.set_media_format(user_id, "file")
+        await query.answer("✅ Media format set to File!")
+        
+        buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📝 ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ", callback_data="file_names")],
+            [InlineKeyboardButton("🖼️ ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ", callback_data="thumbnail")],
+            [InlineKeyboardButton("🏠 ʜᴏᴍᴇ", callback_data="home")]
+        ])
+        
+        await query.message.edit_text(
+            "✅ **Media format set to File!**\n\n"
+            "**Now you can:**\n"
+            "1. Set rename format with /autorename\n"
+            "2. Set thumbnail by sending a photo\n"
+            "3. Send any file - it will be processed as a document\n\n"
+            "**All your files will now be sent as documents.**",
+            reply_markup=buttons
+        )
+    
+    elif data == "media_video":
+        await db.set_media_format(user_id, "video")
+        await query.answer("✅ Media format set to Video!")
+        
+        buttons = InlineKeyboardMarkup([
+            [InlineKeyboardButton("📝 ꜱᴇᴛ ʀᴇɴᴀᴍᴇ ꜰᴏʀᴍᴀᴛ", callback_data="file_names")],
+            [InlineKeyboardButton("🖼️ ꜱᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ", callback_data="thumbnail")],
+            [InlineKeyboardButton("🏠 ʜᴏᴍᴇ", callback_data="home")]
+        ])
+        
+        await query.message.edit_text(
+            "✅ **Media format set to Video!**\n\n"
+            "**Important:** All files will be converted to MP4 video format.\n"
+            "**Video frame will match thumbnail size and ratio.**\n\n"
+            "**Now you can:**\n"
+            "1. Set rename format with /autorename\n"
+            "2. Set thumbnail by sending a photo\n"
+            "3. Send any file - it will be converted to video\n\n"
+            "**All your files will now be converted to videos.**",
+            reply_markup=buttons
+        )
+    
     elif data == "help":
+        media_format_set = await db.is_media_format_set(user_id)
+        
         buttons = InlineKeyboardMarkup([
             [InlineKeyboardButton("• ᴀᴜᴛᴏ ʀᴇɴᴀᴍᴇ ғᴏʀᴍᴀᴛ •", callback_data='file_names')],
             [
@@ -1031,15 +1325,42 @@ async def callback_handler(client, query):
             ],
             [
                 InlineKeyboardButton('• ᴍᴇᴛᴀᴅᴀᴛᴀ', callback_data='meta'),
-                InlineKeyboardButton('ᴅᴏɴᴀᴛᴇ •', callback_data='donate')
+                InlineKeyboardButton('ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ •', callback_data='media_format')
             ],
             [InlineKeyboardButton('• ʜᴏᴍᴇ', callback_data='home')]
         ])
+        
+        if not media_format_set:
+            buttons.inline_keyboard.insert(0, [
+                InlineKeyboardButton("⚠️ ꜱᴇᴛ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜰɪʀꜱᴛ", callback_data='set_media_first')
+            ])
         
         await query.message.edit_text(
             Txt.HELP_TXT,
             reply_markup=buttons,
             disable_web_page_preview=True
+        )
+    
+    elif data == "media_format":
+        buttons = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("📁 File Format", callback_data="media_file"),
+                InlineKeyboardButton("🎬 Video Format", callback_data="media_video")
+            ],
+            [InlineKeyboardButton("🔙 Back", callback_data="help")]
+        ])
+        
+        current_format = await db.get_media_format(user_id)
+        format_status = f"`{current_format.capitalize()}`" if current_format else "❌ **Not Set!**"
+        
+        await query.message.edit_text(
+            f"**⚙️ ᴍᴇᴅɪᴀ ꜰᴏʀᴍᴀᴛ ꜱᴇᴛᴛɪɴɢꜱ**\n\n"
+            f"**Current Format:** {format_status}\n\n"
+            "**Select your media format:**\n"
+            "• **📁 File Format:** Send files as documents\n"
+            "• **🎬 Video Format:** Convert all files to video\n\n"
+            "⚠️ **This setting applies to ALL your files.**",
+            reply_markup=buttons
         )
     
     elif data == "file_names":
@@ -1082,16 +1403,14 @@ async def callback_handler(client, query):
         subtitle = await db.get_subtitle(user_id)
         
         text = f"""
-**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪꜱ ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
+**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪs ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
 
 **◈ Tɪᴛʟᴇ ▹** `{title if title else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
 **◈ Aᴜᴛʜᴏʀ ▹** `{author if author else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aʀᴛɪꜱᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
+**◈ Aʀᴛɪsᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
 **◈ Aᴜᴅɪᴏ ▹** `{audio if audio else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
 **◈ Sᴜʙᴛɪᴛʟᴇ ▹** `{subtitle if subtitle else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Vɪᴅᴇᴏ ▹** `{video if video else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-
-**⚠️ Note:** Metadata addition does NOT re-encode or reduce quality.
+**◈ Vɪᴇᴏ ▹** `{video if video else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
         """
         
         buttons = InlineKeyboardMarkup([
@@ -1116,94 +1435,12 @@ async def callback_handler(client, query):
     elif data == "metadata_on":
         await db.set_metadata(user_id, True)
         await query.answer("Metadata turned ON ✅")
-        
-        metadata_status = await db.get_metadata(user_id)
-        status_text = "ON ✅" if metadata_status else "OFF ❌"
-        
-        title = await db.get_title(user_id)
-        author = await db.get_author(user_id)
-        artist = await db.get_artist(user_id)
-        video = await db.get_video(user_id)
-        audio = await db.get_audio(user_id)
-        subtitle = await db.get_subtitle(user_id)
-        
-        text = f"""
-**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪꜱ ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
-
-**◈ Tɪᴛʟᴇ ▹** `{title if title else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴛʜᴏʀ ▹** `{author if author else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aʀᴛɪꜱᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴅɪᴏ ▹** `{audio if audio else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Sᴜʙᴛɪᴛʟᴇ ▹** `{subtitle if subtitle else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Vɪᴅᴇᴏ ▹** `{video if video else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-
-**⚠️ Note:** Metadata addition does NOT re-encode or reduce quality.
-        """
-        
-        buttons = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("Turn ON ✅", callback_data="metadata_on"),
-                InlineKeyboardButton("Turn OFF", callback_data="metadata_off")
-            ],
-            [
-                InlineKeyboardButton("How to Set Metadata", callback_data="metainfo")
-            ],
-            [
-                InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")
-            ]
-        ])
-        
-        await query.message.edit_text(
-            text=text,
-            reply_markup=buttons,
-            disable_web_page_preview=True
-        )
+        await callback_handler(client, query)  # Refresh menu
     
     elif data == "metadata_off":
         await db.set_metadata(user_id, False)
         await query.answer("Metadata turned OFF ❌")
-        
-        metadata_status = await db.get_metadata(user_id)
-        status_text = "ON ✅" if metadata_status else "OFF ❌"
-        
-        title = await db.get_title(user_id)
-        author = await db.get_author(user_id)
-        artist = await db.get_artist(user_id)
-        video = await db.get_video(user_id)
-        audio = await db.get_audio(user_id)
-        subtitle = await db.get_subtitle(user_id)
-        
-        text = f"""
-**㊋ Yᴏᴜʀ Mᴇᴛᴀᴅᴀᴛᴀ ɪꜱ ᴄᴜʀʀᴇɴᴛʟʏ: {status_text}**
-
-**◈ Tɪᴛʟᴇ ▹** `{title if title else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴛʜᴏʀ ▹** `{author if author else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aʀᴛɪꜱᴛ ▹** `{artist if artist else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Aᴜᴅɪᴏ ▹** `{audio if audio else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Sᴜʙᴛɪᴛʟᴇ ▹** `{subtitle if subtitle else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-**◈ Vɪᴅᴇᴏ ▹** `{video if video else 'Nᴏᴛ ꜰᴏᴜɴᴅ'}`  
-
-**⚠️ Note:** Metadata addition does NOT re-encode or reduce quality.
-        """
-        
-        buttons = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("Turn ON", callback_data="metadata_on"),
-                InlineKeyboardButton("Turn OFF ✅", callback_data="metadata_off")
-            ],
-            [
-                InlineKeyboardButton("How to Set Metadata", callback_data="metainfo")
-            ],
-            [
-                InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")
-            ]
-        ])
-        
-        await query.message.edit_text(
-            text=text,
-            reply_markup=buttons,
-            disable_web_page_preview=True
-        )
+        await callback_handler(client, query)  # Refresh menu
     
     elif data == "metainfo":
         await query.message.edit_text(
@@ -1216,24 +1453,11 @@ async def callback_handler(client, query):
                 ]
             ])
         )
-        return
-    
-    elif data.startswith("media_"):
-        media_type = data.split("_")[1]
-        await db.set_media_preference(user_id, media_type)
-        await query.answer(f"Media type set to {media_type.capitalize()} ✅")
-        await query.message.edit_text(
-            f"✅ **Media type set to {media_type.capitalize()}!**\n\n"
-            f"Renamed files will be sent as {media_type}s.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("• ʙᴀᴄᴋ", callback_data="help")]
-            ])
-        )
     
     elif data == "close":
         await query.message.delete()
     
-    elif data in ["about", "source", "donate"]:
+    elif data in ["about", "source"]:
         await query.answer("This feature will be added soon!", show_alert=True)
     
     else:
@@ -1303,17 +1527,12 @@ if __name__ == "__main__":
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    # Check for FFmpeg
+    # Check for ffmpeg
     if not shutil.which("ffmpeg"):
-        print("⚠️ WARNING: ffmpeg not found! Metadata features will not work.")
-        print("Install ffmpeg:")
-        print("  Ubuntu/Debian: sudo apt-get install ffmpeg")
-        print("  MacOS: brew install ffmpeg")
-        print("  Windows: Download from ffmpeg.org")
-    else:
-        print("✅ FFmpeg found")
+        print("⚠️ WARNING: ffmpeg not found! Video conversion features will not work.")
+        print("Install ffmpeg: sudo apt-get install ffmpeg")
     
-    print("🚀 Starting Auto Rename Bot (Final Corrected Version)...")
+    print("🚀 Starting Auto Rename Bot with Pre-Set Media Format...")
     print("🤖 Bot is running. Press Ctrl+C to stop.")
     
     try:
