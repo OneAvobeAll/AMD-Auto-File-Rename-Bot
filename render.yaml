@@ -1,0 +1,31 @@
+services:
+  - type: worker
+    name: telegram-rename-bot
+    env: python
+    plan: free
+    buildCommand: |
+      apt-get update
+      apt-get install -y ffmpeg
+      pip install -r requirements.txt
+    startCommand: python bot3.py
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN
+        sync: false
+      - key: DB_URL
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: LOG_CHANNEL
+        sync: false
+      - key: START_PIC
+        value: "https://graph.org/file/29a3acbbab9de5f45a5fe.jpg"
+      - key: WEBHOOK
+        value: "False"
+      - key: PORT
+        value: "8080"
