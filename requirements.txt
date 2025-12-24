@@ -1,0 +1,12 @@
+pyrogram==2.0.80
+TgCrypto
+motor
+pymongo
+python-dotenv
+Pillow
+aiohttp
+pytz
+humanize
+pyromod
+hachoir
+ffmpeg-python
