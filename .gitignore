@@ -1,0 +1,37 @@
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+instance/
+.webassets-cache
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Downloads and temp directories
+downloads/
+temp/
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.mp3
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
